@@ -1,9 +1,20 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Target, Users, BookOpen, Award, Star, Quote } from 'lucide-react';
+import React, { useRef } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { Target, Users, BookOpen, Award, Star, Quote, ShieldCheck, Globe, Rocket, ArrowRight } from 'lucide-react';
 import { TESTIMONIALS } from '../constants';
+import { Helmet } from 'react-helmet-async';
+import { Link } from 'react-router-dom';
 
 export default function About() {
+  const statsRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: statsRef,
+    offset: ["start end", "end start"]
+  });
+
+  const y1 = useTransform(scrollYProgress, [0, 1], [0, -50]);
+  const y2 = useTransform(scrollYProgress, [0, 1], [0, 50]);
+
   const stats = [
     { label: "Projets Réalisés", value: "250+", icon: Target },
     { label: "Économisés / an", value: "85M FCFA", icon: Award },
@@ -13,6 +24,39 @@ export default function About() {
 
   return (
     <div className="pt-20">
+      <Helmet>
+        <title>À Propos | SOL! Centrafrique - Énergie Solaire</title>
+        <meta name="description" content="Découvrez SOL!, le leader de l'énergie solaire en Centrafrique. Installations photovoltaïques et solutions énergétiques durables." />
+        <meta name="keywords" content="énergie solaire Centrafrique, installation photovoltaïque, solutions énergétiques durables, SOL! RCA, kits solaires Bangui" />
+      </Helmet>
+
+      {/* Hero Banner */}
+      <section className="relative h-[60vh] overflow-hidden flex items-center">
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=80&w=2000" 
+            alt="Centrafrique Solar Energy" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-brand-secondary/60 backdrop-blur-[2px]" />
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="max-w-2xl"
+          >
+            <h1 className="text-5xl md:text-7xl font-black text-white leading-[1.1] mb-6 tracking-tighter">
+              Une vision durable pour la <span className="text-brand-primary">Centrafrique</span>
+            </h1>
+            <p className="text-xl text-gray-200 font-medium leading-relaxed">
+              Nous construisons l'autonomie énergétique de demain, étape par étape, foyer par foyer.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Story */}
       <section className="py-24 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -52,23 +96,27 @@ export default function About() {
       </section>
 
       {/* Stats */}
-      <section className="py-20 bg-brand-secondary text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section ref={statsRef} className="py-32 bg-brand-secondary text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-brand-primary/10 rounded-full blur-3xl -mr-48 -mt-48" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-brand-primary/5 rounded-full blur-3xl -ml-48 -mb-48" />
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {stats.map((stat, i) => (
               <motion.div 
                 key={i}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="text-center"
+                style={{ y: i % 2 === 0 ? y1 : y2 }}
+                className="text-center p-8 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-sm"
               >
-                <div className="bg-white/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 text-brand-primary">
+                <div className="bg-brand-primary/20 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 text-brand-primary">
                   <stat.icon className="h-8 w-8" />
                 </div>
-                <div className="text-4xl font-bold mb-2">{stat.value}</div>
-                <div className="text-gray-400 text-sm font-medium">{stat.label}</div>
+                <div className="text-4xl font-black mb-2 tracking-tight">{stat.value}</div>
+                <div className="text-gray-400 text-xs font-black uppercase tracking-widest">{stat.label}</div>
               </motion.div>
             ))}
           </div>
@@ -76,31 +124,48 @@ export default function About() {
       </section>
 
       {/* Values */}
-      <section className="py-24 bg-brand-neutral">
+      <section className="py-32 bg-brand-neutral/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-brand-secondary">Nos Valeurs</h2>
+          <div className="text-center mb-20">
+            <p className="text-brand-primary font-bold uppercase tracking-[0.3em] text-xs mb-4">Fondations</p>
+            <h2 className="text-4xl font-black text-brand-secondary tracking-tighter">Nos Valeurs</h2>
           </div>
-          <div className="grid md:grid-cols-3 gap-12">
+          <div className="grid md:grid-cols-3 gap-8">
             {[
               { 
                 title: "Excellence Technique", 
-                desc: "Nous ne faisons aucun compromis sur la qualité du matériel et de l'installation." 
+                desc: "Nous ne faisons aucun compromis sur la qualité du matériel et de l'installation.",
+                icon: ShieldCheck
               },
               { 
                 title: "Engagement Local", 
-                desc: "Nous employons et formons des techniciens centrafricains pour un impact durable." 
+                desc: "Nous employons et formons des techniciens centrafricains pour un impact durable.",
+                icon: Users
               },
               { 
-                title: "Proximité Client", 
-                desc: "Un service après-vente présent à Bangui pour intervenir en moins de 24h." 
+                title: "Innovation Durable", 
+                desc: "Nous apportons les dernières technologies solaires pour les défis de demain.",
+                icon: Rocket
               }
             ].map((v, i) => (
-              <div key={i} className="bg-white p-10 rounded-3xl shadow-sm hover:shadow-md transition-all group">
-                <div className="w-12 h-1 bg-brand-primary mb-6 group-hover:w-full transition-all duration-500" />
-                <h4 className="text-xl font-bold text-brand-secondary mb-4">{v.title}</h4>
-                <p className="text-gray-500">{v.desc}</p>
-              </div>
+              <motion.div 
+                key={i} 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-white p-12 rounded-[3.5rem] shadow-xl shadow-brand-secondary/5 group relative overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 w-24 h-24 bg-brand-primary/5 rounded-bl-[4rem] group-hover:bg-brand-primary/10 transition-colors" />
+                <motion.div 
+                  whileHover={{ scale: 1.2, rotate: 10 }}
+                  className="w-16 h-16 bg-brand-neutral rounded-2xl flex items-center justify-center mb-8 text-brand-primary"
+                >
+                  <v.icon className="h-8 w-8" />
+                </motion.div>
+                <h4 className="text-2xl font-black text-brand-secondary mb-4 tracking-tight">{v.title}</h4>
+                <p className="text-gray-500 leading-relaxed font-medium">{v.desc}</p>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -144,6 +209,35 @@ export default function About() {
               </motion.div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-24 bg-brand-secondary relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-full h-full opacity-10">
+          <div className="absolute top-0 left-0 w-64 h-64 border-8 border-brand-primary rounded-full -ml-32 -mt-32" />
+          <div className="absolute bottom-0 right-0 w-96 h-96 border-8 border-brand-primary rounded-full -mr-48 -mb-48" />
+        </div>
+        
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-8 tracking-tighter">
+              Prêt à passer à l'énergie <span className="text-brand-primary">propre ?</span>
+            </h2>
+            <p className="text-xl text-gray-300 mb-12 font-medium">
+              Obtenez une étude personnalisée et gratuite pour votre domicile ou votre entreprise.
+            </p>
+            <Link 
+              to="/contact"
+              className="inline-flex items-center gap-4 bg-brand-primary text-brand-secondary px-12 py-6 rounded-[2rem] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-brand-primary/20"
+            >
+              Demander un devis gratuit <ArrowRight className="h-6 w-6" />
+            </Link>
+          </motion.div>
         </div>
       </section>
     </div>
