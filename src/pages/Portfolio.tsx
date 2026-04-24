@@ -11,21 +11,55 @@ const categories = [
   { id: 'commercial', name: 'Commercial' },
   { id: 'institutional', name: 'Institutionnel' },
 ];
+
+function OptimizedImage({ src, alt, className, thumbnail }: { src: string; alt: string; className?: string; thumbnail?: boolean }) {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  return (
+    <div className={`relative overflow-hidden ${className}`}>
+      {!isLoaded && (
+        <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+          <Maximize2 className="h-6 w-6 text-gray-300" />
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        onLoad={() => setIsLoaded(true)}
+        className={`w-full h-full object-cover transition-all duration-700 ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-110'}`}
+      />
+    </div>
+  );
+}
+
 export default function Portfolio() {
   const [filter, setFilter] = useState('all');
   const [selectedProject, setSelectedProject] = useState<typeof PROJECTS[0] | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
   const [autoplay, setAutoplay] = useState(true);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
+  const paginate = (newDirection: number) => {
+    if (!selectedProject?.images) return;
+    setDirection(newDirection);
+    setActiveImageIndex((prevIndex) => {
+      let nextIndex = prevIndex + newDirection;
+      if (nextIndex < 0) nextIndex = selectedProject.images!.length - 1;
+      if (nextIndex >= selectedProject.images!.length) nextIndex = 0;
+      return nextIndex;
+    });
+  };
+
   React.useEffect(() => {
     let interval: NodeJS.Timeout;
     if (selectedProject && selectedProject.images && selectedProject.images.length > 1 && autoplay && !isZoomed) {
       interval = setInterval(() => {
-        setActiveImageIndex((prev) => (prev + 1) % selectedProject.images!.length);
+        paginate(1);
       }, 5000);
     }
     return () => clearInterval(interval);
@@ -39,6 +73,24 @@ export default function Portfolio() {
     setSelectedProject(project);
     setActiveImageIndex(0);
     setIsZoomed(false);
+    setDirection(0);
+  };
+
+  const variants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 1000 : -1000,
+      opacity: 0
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1
+    },
+    exit: (direction: number) => ({
+      zIndex: 0,
+      x: direction < 0 ? 1000 : -1000,
+      opacity: 0
+    })
   };
 
   return (
@@ -98,11 +150,10 @@ export default function Portfolio() {
                 onKeyDown={(e) => e.key === 'Enter' && handleProjectSelect(project)}
               >
                 <div className="aspect-[4/3] overflow-hidden">
-                  <img 
+                  <OptimizedImage 
                     src={project.image} 
                     alt={`Installation solaire: ${project.title}`} 
-                    loading="lazy"
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    className="w-full h-full group-hover:scale-110 transition-transform duration-700"
                   />
                   <div className="absolute inset-0 bg-brand-secondary/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <span className="bg-white text-brand-secondary px-6 py-2 rounded-full font-bold text-sm flex items-center gap-2">
@@ -149,7 +200,7 @@ export default function Portfolio() {
               initial={{ opacity: 0, scale: 0.9, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="fixed inset-4 md:inset-x-auto md:top-[10vh] md:bottom-[10vh] md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-5xl bg-white rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.3)] z-[70] overflow-hidden flex flex-col lg:flex-row"
+              className="fixed inset-0 md:inset-4 md:inset-x-auto md:top-[10vh] md:bottom-[10vh] md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-5xl bg-white md:rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.3)] z-[70] overflow-hidden flex flex-col lg:flex-row"
               role="dialog"
               aria-modal="true"
               aria-labelledby="modal-title"
@@ -164,31 +215,41 @@ export default function Portfolio() {
 
               {/* Gallery Section */}
               <div className="flex-1 h-2/5 lg:h-auto overflow-hidden relative group bg-brand-neutral">
-                <AnimatePresence mode="wait">
+                <AnimatePresence initial={false} custom={direction}>
                   <motion.div
                     key={activeImageIndex}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.4 }}
-                    className="w-full h-full relative cursor-zoom-in overflow-hidden"
+                    custom={direction}
+                    variants={variants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{
+                      x: { type: "spring", stiffness: 300, damping: 30 },
+                      opacity: { duration: 0.2 }
+                    }}
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={1}
+                    onDragEnd={(e, { offset, velocity }) => {
+                      const swipe = Math.abs(offset.x) > 50 || Math.abs(velocity.x) > 500;
+                      if (swipe) {
+                        paginate(offset.x > 0 ? -1 : 1);
+                      }
+                    }}
+                    className="absolute inset-0 cursor-zoom-in"
                     onClick={() => setIsZoomed(!isZoomed)}
                   >
-                    <motion.img 
+                    <motion.div
                       animate={{ scale: isZoomed ? 1.5 : 1 }}
                       transition={{ type: 'spring', damping: 25 }}
-                      src={selectedProject.images ? selectedProject.images[activeImageIndex] : selectedProject.image} 
-                      alt={`${selectedProject.title} view ${activeImageIndex + 1}`}
-                      loading="lazy"
-                      className={`w-full h-full object-cover select-none ${isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
-                    />
-                    {isZoomed && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
-                        <span className="bg-white/90 px-4 py-2 rounded-full font-bold text-brand-secondary shadow-xl">
-                          Mode Zoom Activé
-                        </span>
-                      </div>
-                    )}
+                      className="w-full h-full"
+                    >
+                      <OptimizedImage 
+                        src={selectedProject.images ? selectedProject.images[activeImageIndex] : selectedProject.image} 
+                        alt={`${selectedProject.title} view ${activeImageIndex + 1}`}
+                        className={`w-full h-full ${isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
+                      />
+                    </motion.div>
                   </motion.div>
                 </AnimatePresence>
 
@@ -199,57 +260,49 @@ export default function Portfolio() {
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            setActiveImageIndex(prev => (prev - 1 + selectedProject.images!.length) % selectedProject.images!.length);
+                            paginate(-1);
                           }}
-                          className="absolute left-6 top-1/2 -translate-y-1/2 bg-white/60 backdrop-blur-xl p-5 rounded-3xl text-brand-secondary hover:bg-brand-primary hover:scale-110 active:scale-95 transition-all shadow-2xl z-[75] border border-white/20"
+                          className="absolute left-6 top-1/2 -translate-y-1/2 bg-white/60 backdrop-blur-xl p-3 md:p-5 rounded-2xl md:rounded-3xl text-brand-secondary hover:bg-brand-primary hover:scale-110 active:scale-95 transition-all shadow-2xl z-[75] border border-white/20 hidden md:block"
                         >
                           <ChevronLeft className="h-8 w-8" />
                         </button>
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            setActiveImageIndex(prev => (prev + 1) % selectedProject.images!.length);
+                            paginate(1);
                           }}
-                          className="absolute right-6 top-1/2 -translate-y-1/2 bg-white/60 backdrop-blur-xl p-5 rounded-3xl text-brand-secondary hover:bg-brand-primary hover:scale-110 active:scale-95 transition-all shadow-2xl z-[75] border border-white/20"
+                          className="absolute right-6 top-1/2 -translate-y-1/2 bg-white/60 backdrop-blur-xl p-3 md:p-5 rounded-2xl md:rounded-3xl text-brand-secondary hover:bg-brand-primary hover:scale-110 active:scale-95 transition-all shadow-2xl z-[75] border border-white/20 hidden md:block"
                         >
                           <ChevronRight className="h-8 w-8" />
                         </button>
                       </>
                     )}
 
-                    {/* Thumbnail strips */}
-                    <div className="absolute bottom-8 left-8 right-8 flex justify-center gap-4">
-                      {selectedProject.images?.map((img, i) => (
+                    {/* Thumbnail strips / Indicators */}
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                      {selectedProject.images?.map((_, i) => (
                         <button
                           key={i}
                           onClick={(e) => { e.stopPropagation(); setActiveImageIndex(i); }}
-                          className={`w-20 h-20 rounded-2xl overflow-hidden border-4 transition-all duration-300 relative ${
+                          className={`h-2 rounded-full transition-all duration-300 ${
                             i === activeImageIndex 
-                              ? 'border-brand-primary scale-110 shadow-[0_0_20px_rgba(253,185,19,0.5)] z-10' 
-                              : 'border-white/20 opacity-50 hover:opacity-100 hover:border-white/40'
+                              ? 'w-8 bg-brand-primary shadow-[0_0_10px_rgba(253,185,19,0.5)]' 
+                              : 'w-2 bg-white/50 hover:bg-white'
                           }`}
-                        >
-                          <img src={img} alt="thumbnail" className="w-full h-full object-cover" loading="lazy" />
-                          {i === activeImageIndex && (
-                            <motion.div 
-                              layoutId="active-thumb"
-                              className="absolute inset-0 border-2 border-brand-primary rounded-xl pointer-events-none"
-                            />
-                          )}
-                        </button>
+                        />
                       ))}
                     </div>
 
-                    <div className="absolute top-8 left-8 bg-brand-secondary/60 backdrop-blur-md text-white px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border border-white/10">
-                      <Maximize2 className="h-4 w-4" /> Cliquez pour Zoomer
+                    <div className="absolute top-8 left-8 bg-brand-secondary/60 backdrop-blur-md text-white px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border border-white/10 pointer-events-none">
+                      <Maximize2 className="h-4 w-4" /> {isZoomed ? 'Zoom Activé' : 'Swipe/Cliquez pour Zoomer'}
                     </div>
                     
                     {selectedProject.images && selectedProject.images.length > 1 && (
                       <button 
                         onClick={(e) => { e.stopPropagation(); setAutoplay(!autoplay); }}
-                        className="absolute top-8 right-24 bg-brand-secondary/60 backdrop-blur-md text-white px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border border-white/10 hover:bg-brand-primary hover:text-brand-secondary transition-all"
+                        className="absolute top-8 right-20 md:right-24 bg-brand-secondary/60 backdrop-blur-md text-white px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border border-white/10 hover:bg-brand-primary hover:text-brand-secondary transition-all"
                       >
-                        {autoplay ? 'Pause Diaporama' : 'Lecture Diaporama'}
+                        {autoplay ? 'Pause' : 'Lecture'}
                       </button>
                     )}
                   </>
