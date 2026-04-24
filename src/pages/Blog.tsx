@@ -1,7 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
-import { Calendar, User, ArrowRight, Search, X, Share2, Facebook, Linkedin, Loader2, MessageCircle, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Calendar, User, ArrowRight, Search, X, Share2, Facebook, Linkedin, Loader2, MessageCircle, AlertCircle, CheckCircle2, MessageSquare, ImageIcon, Trash2, ChevronLeft, ChevronRight, Quote } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
+
+interface Comment {
+  id: string;
+  postId: number;
+  name: string;
+  email: string;
+  message: string;
+  image?: string;
+  date: string;
+}
 
 const POSTS = [
   {
@@ -46,6 +57,7 @@ const POSTS_PER_PAGE = 3;
 const CATEGORIES = ["Tous", "Guides", "Actualités", "Entretien", "Projets"];
 
 export default function Blog() {
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState("Tous");
   const [isLoading, setIsLoading] = useState(false);
@@ -54,6 +66,71 @@ export default function Blog() {
   const [sharePost, setSharePost] = useState<{title: string, id: number} | null>(null);
   const [showCopied, setShowCopied] = useState(false);
   const [selectedPost, setSelectedPost] = useState<typeof POSTS[0] | null>(null);
+  
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentForm, setCommentForm] = useState({ name: '', email: '', message: '', image: '' });
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [commentCarouselIndex, setCommentCarouselIndex] = useState(0);
+
+  useEffect(() => {
+    const savedComments = localStorage.getItem('blog_comments');
+    if (savedComments) {
+      setComments(JSON.parse(savedComments));
+    }
+  }, []);
+
+  const handleCommentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentForm.name || !commentForm.email || !commentForm.message) {
+      showToast("Veuillez remplir tous les champs obligatoires.", "error");
+      return;
+    }
+
+    setIsSubmittingComment(true);
+    setTimeout(() => {
+      const newComment: Comment = {
+        id: Math.random().toString(36).substr(2, 9),
+        postId: selectedPost!.id,
+        name: commentForm.name,
+        email: commentForm.email,
+        message: commentForm.message,
+        image: commentForm.image || undefined,
+        date: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+      };
+
+      const updatedComments = [newComment, ...comments];
+      setComments(updatedComments);
+      localStorage.setItem('blog_comments', JSON.stringify(updatedComments));
+      setCommentForm({ name: '', email: '', message: '', image: '' });
+      setIsSubmittingComment(false);
+      showToast("Merci pour votre commentaire !", "success");
+    }, 1000);
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCommentForm(prev => ({ ...prev, image: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const currentPostComments = comments.filter(c => c.postId === selectedPost?.id);
+
+  const nextComment = () => {
+    if (currentPostComments.length > 0) {
+      setCommentCarouselIndex((prev) => (prev + 1) % currentPostComments.length);
+    }
+  };
+
+  const prevComment = () => {
+    if (currentPostComments.length > 0) {
+      setCommentCarouselIndex((prev) => (prev - 1 + currentPostComments.length) % currentPostComments.length);
+    }
+  };
 
   const activePostForHelmet = selectedPost || (sharePost ? POSTS.find(p => p.id === sharePost.id) : null);
 
@@ -192,9 +269,183 @@ export default function Blog() {
                     >
                       <Share2 className="h-5 w-5" /> Plus d'options
                     </button>
-                  </div>
                 </div>
               </div>
+            </div>
+
+            {/* Comments Section */}
+            <section className="mb-24">
+                <div className="flex items-center gap-4 mb-12">
+                  <div className="h-px bg-gray-200 flex-1"></div>
+                  <h3 className="text-2xl font-black text-brand-secondary px-6 shrink-0 flex items-center gap-3">
+                    <MessageSquare className="h-6 w-6 text-brand-primary" />
+                    Commentaires ({currentPostComments.length})
+                  </h3>
+                  <div className="h-px bg-gray-200 flex-1"></div>
+                </div>
+
+                {/* Comments Carousel */}
+                {currentPostComments.length > 0 ? (
+                  <div className="relative mb-20">
+                    <div className="overflow-hidden">
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={currentPostComments[commentCarouselIndex].id}
+                          initial={{ opacity: 0, x: 50 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -50 }}
+                          className="bg-white p-10 rounded-[3rem] shadow-xl border border-gray-100"
+                        >
+                          <div className="flex flex-col md:flex-row gap-8">
+                            {currentPostComments[commentCarouselIndex].image && (
+                              <div className="w-full md:w-32 h-32 rounded-2xl overflow-hidden flex-shrink-0">
+                                <img 
+                                  src={currentPostComments[commentCarouselIndex].image} 
+                                  alt="Comment attachment" 
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <div className="flex justify-between items-start mb-4">
+                                <div>
+                                  <h4 className="font-black text-brand-secondary text-lg">{currentPostComments[commentCarouselIndex].name}</h4>
+                                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{currentPostComments[commentCarouselIndex].date}</p>
+                                </div>
+                                <Quote className="h-10 w-10 text-brand-primary/10" />
+                              </div>
+                              <p className="text-gray-600 leading-relaxed italic">
+                                "{currentPostComments[commentCarouselIndex].message}"
+                              </p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
+                    {currentPostComments.length > 1 && (
+                      <div className="flex justify-center gap-4 mt-8">
+                        <button 
+                          onClick={prevComment}
+                          className="p-3 bg-white border border-gray-100 rounded-xl text-brand-secondary hover:bg-brand-primary transition-all shadow-sm"
+                        >
+                          <ChevronLeft className="h-5 w-5" />
+                        </button>
+                        <div className="flex items-center gap-2">
+                          {currentPostComments.map((_, i) => (
+                            <div 
+                              key={i} 
+                              className={`h-1.5 rounded-full transition-all ${i === commentCarouselIndex ? 'w-6 bg-brand-primary' : 'w-1.5 bg-gray-200'}`} 
+                            />
+                          ))}
+                        </div>
+                        <button 
+                          onClick={nextComment}
+                          className="p-3 bg-white border border-gray-100 rounded-xl text-brand-secondary hover:bg-brand-primary transition-all shadow-sm"
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-16 bg-brand-neutral/30 rounded-[3rem] border-2 border-dashed border-gray-200 mb-20">
+                    <MessageCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">Soyez le premier à commenter !</p>
+                  </div>
+                )}
+
+                {/* Comment Form */}
+                <div className="bg-brand-secondary p-12 rounded-[3.5rem] text-white shadow-2xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-brand-primary/10 rounded-full blur-3xl -mr-32 -mt-32" />
+                  <div className="relative z-10">
+                    <h3 className="text-3xl font-black mb-2 tracking-tighter">Laissez un commentaire</h3>
+                    <p className="text-white/60 mb-10 font-medium">Votre adresse email ne sera pas publiée.</p>
+
+                    <form onSubmit={handleCommentSubmit} className="space-y-6">
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/80 ml-4">Nom Complet*</label>
+                          <input 
+                            type="text" 
+                            required
+                            value={commentForm.name}
+                            onChange={(e) => setCommentForm({ ...commentForm, name: e.target.value })}
+                            placeholder="Ex: Jean Dupont"
+                            className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-2xl focus:bg-white/10 focus:border-brand-primary outline-none transition-all placeholder:text-white/20"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/80 ml-4">Email*</label>
+                          <input 
+                            type="email" 
+                            required
+                            value={commentForm.email}
+                            onChange={(e) => setCommentForm({ ...commentForm, email: e.target.value })}
+                            placeholder="Ex: jean@domaine.com"
+                            className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-2xl focus:bg-white/10 focus:border-brand-primary outline-none transition-all placeholder:text-white/20"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/80 ml-4">Message*</label>
+                        <textarea 
+                          required
+                          rows={4}
+                          value={commentForm.message}
+                          onChange={(e) => setCommentForm({ ...commentForm, message: e.target.value })}
+                          placeholder="Votre avis nous intéresse..."
+                          className="w-full bg-white/5 border border-white/10 px-6 py-4 rounded-2xl focus:bg-white/10 focus:border-brand-primary outline-none transition-all placeholder:text-white/20 resize-none"
+                        ></textarea>
+                      </div>
+
+                      <div className="flex flex-col md:flex-row items-center gap-6">
+                        <div className="relative group">
+                          <input 
+                            type="file" 
+                            id="comment-image"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                          />
+                          <label 
+                            htmlFor="comment-image"
+                            className="flex items-center gap-3 px-6 py-4 bg-white/5 border border-white/10 rounded-2xl cursor-pointer hover:bg-white/10 transition-all text-xs font-bold uppercase tracking-widest text-white shrink-0"
+                          >
+                            <ImageIcon className="h-5 w-5 text-brand-primary" />
+                            {commentForm.image ? 'Image ajoutée' : 'Ajouter une photo'}
+                          </label>
+                          {commentForm.image && (
+                            <button 
+                              type="button"
+                              onClick={() => setCommentForm({ ...commentForm, image: '' })}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full hover:scale-110 transition-all shadow-lg"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+
+                        <button 
+                          type="submit"
+                          disabled={isSubmittingComment}
+                          className="w-full md:flex-1 bg-brand-primary text-brand-secondary font-black px-10 py-4 rounded-2xl uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                        >
+                          {isSubmittingComment ? (
+                            <>
+                              <Loader2 className="h-5 w-5 animate-spin" /> Envoi...
+                            </>
+                          ) : (
+                            <>
+                              Publier le commentaire <ArrowRight className="h-5 w-5" />
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </section>
 
               <section className="mb-24">
                 <div className="flex items-center gap-4 mb-8">

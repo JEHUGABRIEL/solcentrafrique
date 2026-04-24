@@ -83,7 +83,8 @@ export const PRODUCTS: Product[] = [
     price: '145.000',
     category: 'Panneaux',
     image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=60&w=600',
-    description: 'Cellules monocristallines haute performance, garantie 25 ans.'
+    description: 'Cellules monocristallines haute performance, garantie 25 ans.',
+    promoExpiry: '2026-05-15T00:00:00Z'
   },
   {
     id: 'p2',
@@ -99,7 +100,8 @@ export const PRODUCTS: Product[] = [
     price: '420.000',
     category: 'Onduleurs',
     image: 'https://images.unsplash.com/photo-1509391366360-fe5bb58583bb?auto=format&fit=crop&q=60&w=600',
-    description: 'Gestion intelligente réseau/batterie, wifi inclus.'
+    description: 'Gestion intelligente réseau/batterie, wifi inclus.',
+    promoExpiry: '2026-05-01T23:59:59Z'
   },
   {
     id: 'p4',
