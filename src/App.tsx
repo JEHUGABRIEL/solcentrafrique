@@ -11,6 +11,7 @@ import Cart from './pages/Cart';
 import Portfolio from './pages/Portfolio';
 import About from './pages/About';
 import Blog from './pages/Blog';
+import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminLogin from './pages/AdminLogin';
 import FloatingActions from './components/FloatingActions';
@@ -117,6 +118,11 @@ export default function App() {
             <Route path="/admin/login" element={
               <motion.div initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={{ duration: 0.3 }}>
                 <AdminLogin />
+              </motion.div>
+            } />
+            <Route path="/mon-profil" element={
+              <motion.div initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={{ duration: 0.3 }}>
+                <Profile />
               </motion.div>
             } />
           </Routes>

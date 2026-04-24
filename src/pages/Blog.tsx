@@ -56,6 +56,27 @@ const POSTS = [
 const POSTS_PER_PAGE = 3;
 const CATEGORIES = ["Tous", "Guides", "Actualités", "Entretien", "Projets"];
 
+function OptimizedBlogImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  return (
+    <div className={`relative overflow-hidden ${className}`}>
+      {!isLoaded && (
+        <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+          <ImageIcon className="h-6 w-6 text-gray-300" />
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        onLoad={() => setIsLoaded(true)}
+        className={`w-full h-full object-cover transition-all duration-700 ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-110'}`}
+      />
+    </div>
+  );
+}
+
 export default function Blog() {
   const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
@@ -223,7 +244,7 @@ export default function Blog() {
               </button>
 
               <div className="bg-white rounded-[3rem] overflow-hidden shadow-2xl border border-gray-100 mb-16">
-                <img src={selectedPost.image} alt={selectedPost.title} className="w-full h-[400px] object-cover" />
+                <OptimizedBlogImage src={selectedPost.image} alt={selectedPost.title} className="w-full h-[400px]" />
                 <div className="p-12">
                   <div className="flex items-center gap-4 text-xs font-bold text-gray-400 mb-6 uppercase tracking-widest">
                     <span className="bg-brand-primary/10 text-brand-primary px-3 py-1 rounded-lg">{selectedPost.category}</span>
@@ -466,7 +487,7 @@ export default function Blog() {
                       className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex gap-6 cursor-pointer group"
                     >
                       <div className="w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0">
-                        <img src={post.image} alt={post.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        <OptimizedBlogImage src={post.image} alt={post.title} className="w-full h-full group-hover:scale-110 transition-transform duration-500" />
                       </div>
                       <div>
                         <h4 className="font-bold text-brand-secondary mb-2 group-hover:text-brand-primary transition-colors line-clamp-2">
@@ -556,7 +577,7 @@ export default function Blog() {
                           onClick={() => { setSelectedPost(post); window.scrollTo(0, 0); }}
                         >
                           <div className="h-64 overflow-hidden relative">
-                            <img src={post.image} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                            <OptimizedBlogImage src={post.image} alt={post.title} className="w-full h-full group-hover:scale-105 transition-transform duration-700" />
                             <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold text-brand-secondary">{post.category}</div>
                             <div className="absolute bottom-4 right-4 flex gap-2 translate-y-12 group-hover:translate-y-0 transition-transform">
                               <button onClick={(e) => { e.stopPropagation(); handleShare('facebook', post.title); }} className="bg-white text-[#1877F2] p-3 rounded-xl shadow-lg hover:bg-[#1877F2] hover:text-white transition-all"><Facebook className="h-4 w-4" /></button>
