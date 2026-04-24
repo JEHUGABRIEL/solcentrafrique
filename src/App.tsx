@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sun, Phone, Mail, MapPin, Facebook, Instagram, Linkedin, Zap, LayoutDashboard } from 'lucide-react';
 import Navbar from './components/Navbar';
@@ -13,11 +13,10 @@ import About from './pages/About';
 import Blog from './pages/Blog';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminLogin from './pages/AdminLogin';
-import Chatbot from './components/Chatbot';
-import ScrollToTop from './components/ScrollToTop';
+import FloatingActions from './components/FloatingActions';
 import { HelmetProvider } from 'react-helmet-async';
 import { CartProvider } from './context/CartContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import Login from './pages/Login';
 
@@ -25,6 +24,28 @@ const pageVariants = {
   initial: { opacity: 0, y: 10 },
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -10 },
+};
+
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, isAdmin, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-brand-neutral">
+        <motion.div 
+          animate={{ rotate: 360 }} 
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-12 h-12 border-4 border-brand-primary border-t-transparent rounded-full"
+        />
+      </div>
+    );
+  }
+
+  if (!user || !isAdmin) {
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  return <>{children}</>;
 };
 
 export default function App() {
@@ -37,7 +58,6 @@ export default function App() {
       <CartProvider>
         <div className="min-h-screen bg-brand-neutral font-sans selection:bg-brand-primary selection:text-brand-secondary">
           <Navbar />
-          <ScrollToTop />
           
           <main className="relative">
           <AnimatePresence mode="wait">
@@ -83,9 +103,11 @@ export default function App() {
               </motion.div>
             } />
             <Route path="/admin" element={
-              <motion.div initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={{ duration: 0.3 }}>
-                <AdminDashboard />
-              </motion.div>
+              <AdminRoute>
+                <motion.div initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={{ duration: 0.3 }}>
+                  <AdminDashboard />
+                </motion.div>
+              </AdminRoute>
             } />
             <Route path="/login" element={
               <motion.div initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={{ duration: 0.3 }}>
@@ -100,7 +122,7 @@ export default function App() {
           </Routes>
         </AnimatePresence>
       </main>
-      <Chatbot />
+      <FloatingActions />
       
       <footer className="bg-brand-secondary text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -115,9 +137,6 @@ export default function App() {
               <p className="text-gray-400 max-w-sm">
                 Leader de l'énergie solaire en République Centrafricaine. Nous apportons la lumière et la puissance aux familles et aux entreprises.
               </p>
-              <Link to="/admin" className="mt-6 inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-brand-primary transition-colors">
-                <LayoutDashboard className="h-3 w-3" /> Dashboard Admin
-              </Link>
             </div>
             
             <div>

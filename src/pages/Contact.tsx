@@ -59,6 +59,11 @@ export default function Contact() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Request permission for push notifications on first interaction
+    if (Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
     // Final validation check
     const newErrors: FormErrors = {};
     if (!formData.name) newErrors.name = 'Le nom est requis';
@@ -86,6 +91,14 @@ export default function Contact() {
       
       // Dispatch a custom event for real-time notification if admin is in another tab/component
       window.dispatchEvent(new CustomEvent('new-lead', { detail: newLead }));
+
+      // Browser Push Notification (Simulated for this turn)
+      if (Notification.permission === 'granted') {
+        new Notification("Nouveau Lead SOL!", {
+          body: `Demande de ${newLead.name} (${newLead.type})`,
+          icon: '/logo_sol_centrafrique.png'
+        });
+      }
 
       setIsSubmitting(false);
       setIsSubmitted(true);

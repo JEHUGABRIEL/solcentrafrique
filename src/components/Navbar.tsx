@@ -11,7 +11,9 @@ export default function Navbar() {
   const { itemCount } = useCart();
   const { user, isAuthenticated, logout, isAdmin } = useAuth();
 
-  const navLinks = [
+  const isAdminPage = location.pathname.startsWith('/admin');
+
+  const navLinks = isAdminPage ? [] : [
     { name: 'Accueil', path: '/' },
     { name: 'Services', path: '/services' },
     { name: 'Boutique', path: '/shop' },
@@ -26,7 +28,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20">
           <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-3 group">
+            <Link to={isAdminPage ? "/admin" : "/"} className="flex items-center space-x-3 group">
               <div className="relative w-12 h-12 bg-white rounded-full overflow-hidden shadow-lg border-2 border-brand-primary transform group-hover:scale-110 transition-transform duration-300">
                 <img 
                   src="/logo_sol_centrafrique.png" 
@@ -39,7 +41,7 @@ export default function Navbar() {
                   SOL<span className="text-brand-primary">!</span>
                 </span>
                 <span className="text-[8px] font-black uppercase tracking-[0.2em] text-brand-primary leading-none mt-1">
-                  Centrafrique
+                  {isAdminPage ? 'Admin' : 'Centrafrique'}
                 </span>
               </div>
             </Link>
@@ -59,20 +61,22 @@ export default function Navbar() {
               </Link>
             ))}
             
-            <div className="relative group">
-              <Link to="/cart" className="p-2 text-brand-secondary hover:text-brand-primary transition-colors">
-                <ShoppingCart className="h-6 w-6" />
-                {itemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-brand-primary text-brand-secondary text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                    {itemCount}
-                  </span>
-                )}
-              </Link>
-            </div>
+            {!isAdminPage && (
+              <div className="relative group">
+                <Link to="/cart" className="p-2 text-brand-secondary hover:text-brand-primary transition-colors">
+                  <ShoppingCart className="h-6 w-6" />
+                  {itemCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-brand-primary text-brand-secondary text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                      {itemCount}
+                    </span>
+                  )}
+                </Link>
+              </div>
+            )}
 
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
-                {isAdmin && (
+                {isAdmin && !isAdminPage && (
                   <Link to="/admin" className="p-2 text-brand-secondary hover:text-brand-primary transition-colors flex items-center gap-2 font-semibold text-sm">
                     <LayoutDashboard className="h-5 w-5" />
                     <span>Admin</span>
@@ -96,19 +100,24 @@ export default function Navbar() {
               </Link>
             )}
 
-            <Link
-              to="/contact"
-              className="bg-brand-primary text-brand-secondary px-6 py-2.5 rounded-full font-bold text-sm hover:bg-brand-primary/90 transition-all flex items-center gap-2"
-            >
-              Devis Gratuit
-            </Link>
+            {!isAdminPage && (
+              <Link
+                to="/contact"
+                className="bg-brand-primary text-brand-secondary px-6 py-2.5 rounded-full font-bold text-sm hover:bg-brand-primary/90 transition-all flex items-center gap-2"
+              >
+                Devis Gratuit
+              </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center">
             <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="text-brand-secondary p-2 focus:outline-none focus:ring-2 focus:ring-brand-primary rounded-lg"
+              onClick={() => {
+                if (navigator.vibrate) navigator.vibrate(5);
+                setIsOpen(!isOpen);
+              }}
+              className="text-brand-secondary p-2 focus:outline-none focus:ring-2 focus:ring-brand-primary rounded-lg transition-transform active:scale-90"
               aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
               aria-expanded={isOpen}
             >
@@ -163,14 +172,13 @@ export default function Navbar() {
                 {navLinks.map((link, idx) => (
                   <motion.div
                     key={link.path}
-                    initial={{ opacity: 0, x: 20 }}
+                    initial={{ opacity: 0, x: 50 }}
                     animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
                     transition={{ 
                       type: 'spring', 
-                      damping: 25, 
-                      stiffness: 200,
-                      delay: isOpen ? idx * 0.1 : 0 
+                      damping: 30, 
+                      stiffness: 300,
+                      delay: idx * 0.05 
                     }}
                   >
                     <Link
@@ -181,13 +189,13 @@ export default function Navbar() {
                       }}
                       className={`group flex items-center justify-between px-5 py-4 rounded-2xl transition-all active:scale-95 ${
                         location.pathname === link.path 
-                          ? 'bg-brand-primary/10 text-brand-secondary font-black' 
+                          ? 'bg-brand-primary text-brand-secondary font-black shadow-lg shadow-brand-primary/20' 
                           : 'text-gray-600 font-bold hover:bg-brand-neutral hover:text-brand-secondary'
                       }`}
                     >
                       <span className="text-lg">{link.name}</span>
                       {location.pathname === link.path ? (
-                        <div className="w-1.5 h-1.5 bg-brand-primary rounded-full shadow-[0_0_10px_rgba(230,126,34,0.8)]" />
+                        <div className="w-2 h-2 bg-brand-secondary rounded-full" />
                       ) : (
                         <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-all text-brand-primary" />
                       )}
@@ -197,54 +205,87 @@ export default function Navbar() {
               </div>
 
               <div className="p-6 space-y-4 bg-brand-neutral/50 border-t border-gray-100">
-                <div className="grid grid-cols-2 gap-3">
-                  <Link 
-                    to="/cart" 
-                    onClick={() => setIsOpen(false)} 
-                    className="flex flex-col items-center justify-center p-5 rounded-[2rem] bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all relative group"
-                  >
-                    <div className="relative mb-1">
-                      <ShoppingCart className="h-7 w-7 text-brand-secondary group-hover:text-brand-primary transition-colors" />
-                      {itemCount > 0 && (
-                        <span className="absolute -top-1 -right-2 bg-brand-primary text-brand-secondary text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-lg border border-white">
-                          {itemCount}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Panier</span>
-                  </Link>
-
-                  {isAuthenticated ? (
-                    <button
-                      onClick={() => {
-                        logout();
-                        setIsOpen(false);
-                      }}
-                      className="flex flex-col items-center justify-center p-5 rounded-[2rem] bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all group"
+                <div className={`grid ${isAdminPage ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
+                  {!isAdminPage && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
                     >
-                      <LogOut className="h-7 w-7 text-brand-secondary group-hover:text-red-500 transition-colors mb-1" />
-                      <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Logout</span>
-                    </button>
-                  ) : (
-                    <Link
-                      to="/login"
-                      onClick={() => setIsOpen(false)}
-                      className="flex flex-col items-center justify-center p-5 rounded-[2rem] bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all group"
-                    >
-                      <User className="h-7 w-7 text-brand-secondary group-hover:text-brand-primary transition-colors mb-1" />
-                      <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Login</span>
-                    </Link>
+                      <Link 
+                        to="/cart" 
+                        onClick={() => {
+                          if (navigator.vibrate) navigator.vibrate(10);
+                          setIsOpen(false);
+                        }} 
+                        className="flex flex-col h-full items-center justify-center p-5 rounded-[2rem] bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all relative group"
+                      >
+                        <div className="relative mb-1">
+                          <ShoppingCart className="h-7 w-7 text-brand-secondary group-hover:text-brand-primary transition-colors" />
+                          {itemCount > 0 && (
+                            <span className="absolute -top-1 -right-2 bg-brand-primary text-brand-secondary text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-lg border border-white">
+                              {itemCount}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Panier</span>
+                      </Link>
+                    </motion.div>
                   )}
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    className="h-full"
+                  >
+                    {isAuthenticated ? (
+                      <button
+                        onClick={() => {
+                          if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
+                          logout();
+                          setIsOpen(false);
+                        }}
+                        className="w-full flex h-full flex-col items-center justify-center p-5 rounded-[2rem] bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all group"
+                      >
+                        <LogOut className="h-7 w-7 text-brand-secondary group-hover:text-red-500 transition-colors mb-1" />
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Logout</span>
+                      </button>
+                    ) : (
+                      <Link
+                        to="/login"
+                        onClick={() => {
+                          if (navigator.vibrate) navigator.vibrate(10);
+                          setIsOpen(false);
+                        }}
+                        className="flex h-full flex-col items-center justify-center p-5 rounded-[2rem] bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all group"
+                      >
+                        <User className="h-7 w-7 text-brand-secondary group-hover:text-brand-primary transition-colors mb-1" />
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Login</span>
+                      </Link>
+                    )}
+                  </motion.div>
                 </div>
 
-                <Link
-                  to="/contact"
-                  onClick={() => setIsOpen(false)}
-                  className="w-full bg-brand-secondary text-white px-6 py-5 rounded-2xl font-black flex justify-center items-center gap-3 shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all group"
-                >
-                  <Phone className="h-6 w-6 text-brand-primary" /> 
-                  <span className="uppercase tracking-widest text-lg">Devis Gratuit</span>
-                </Link>
+                {!isAdminPage && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 }}
+                  >
+                    <Link
+                      to="/contact"
+                      onClick={() => {
+                        if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
+                        setIsOpen(false);
+                      }}
+                      className="w-full bg-brand-secondary text-white px-6 py-5 rounded-2xl font-black flex justify-center items-center gap-3 shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all group"
+                    >
+                      <Phone className="h-6 w-6 text-brand-primary" /> 
+                      <span className="uppercase tracking-widest text-lg">Devis Gratuit</span>
+                    </Link>
+                  </motion.div>
+                )}
               </div>
             </motion.div>
           </>

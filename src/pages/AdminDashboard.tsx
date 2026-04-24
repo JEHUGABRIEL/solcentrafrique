@@ -62,6 +62,11 @@ export default function AdminDashboard() {
     }
     loadData();
 
+    // Request notification permission for admin
+    if (Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
     const handleNewLead = (e: any) => {
       const lead = e.detail;
       setNotifications(prev => [lead, ...prev]);
