@@ -13,11 +13,158 @@ const ADMIN_CREDENTIALS = {
   password: 'bangui2026'
 };
 
-// Simple in-memory storage for login attempts and brute-force protection
+// Simple in-memory storage for content
+const posts = [
+  {
+    id: 1,
+    title: "Comment choisir la puissance de son kit solaire ?",
+    excerpt: "Calculer ses besoins est la première étape vers l'autonomie. Découvrez notre guide simple.",
+    date: "12 Avril 2026",
+    author: "Ing. Moussa",
+    image: "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=60&w=800",
+    category: "Guides"
+  },
+  {
+    id: 2,
+    title: "Le solaire en RCA : Quel avenir pour l'énergie ?",
+    excerpt: "L'état des lieux de la transition énergétique en Centrafrique et les opportunités pour 2026.",
+    date: "05 Avril 2026",
+    author: "Direction SOL!",
+    image: "https://images.unsplash.com/photo-1466611653911-95282ee36567?auto=format&fit=crop&q=60&w=800",
+    category: "Actualités"
+  },
+  {
+    id: 3,
+    title: "Entretien de vos panneaux : 5 conseils d'experts",
+    excerpt: "Un panneau propre est un panneau qui produit. Apprenez les bons gestes pour Bangui.",
+    date: "28 Mars 2026",
+    author: "Service Maintenance",
+    image: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&q=60&w=800",
+    category: "Entretien"
+  }
+];
+
+const projects = [
+  {
+    id: '1',
+    title: 'Villa Moderne - Bangui',
+    category: 'residential',
+    image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=80&w=1200',
+    images: [
+      'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&q=80&w=1200'
+    ],
+    roi: 'Économies: 600.000 FCFA/an',
+    description: 'Autonomie complète pour une famille de 6 personnes avec un système hybride gérant les coupures nocturnes.',
+  },
+  {
+    id: '2',
+    title: 'Hôtel Solaire - Boali',
+    category: 'commercial',
+    image: 'https://images.unsplash.com/photo-1466611653911-95282ee36567?auto=format&fit=crop&q=80&w=1200',
+    images: [
+      'https://images.unsplash.com/photo-1466611653911-95282ee36567?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1558449028-b53a39d100fc?auto=format&fit=crop&q=80&w=1200'
+    ],
+    roi: 'Économies: 2.500.000 FCFA/an',
+    description: 'Un système hybride industriel permettant de maintenir la climatisation et l\'éclairage extérieur sans interruption.',
+  }
+];
+
+// In-memory storage for login attempts and brute-force protection
 const loginAttempts: any[] = [];
 const failedAttemptsMap = new Map<string, { count: number; lastAttempt: number }>();
 
+// Middleware to check admin token
+const checkAdmin = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: "Non autorisé." });
+  }
+  // Simplified validation for demo purposes
+  next();
+};
+
+// Comments storage
+const comments: any[] = [];
+
 // API routes
+app.get("/api/posts", (req, res) => res.json(posts));
+app.get("/api/projects", (req, res) => res.json(projects));
+
+app.get("/api/comments/:postId", (req, res) => {
+  const { postId } = req.params;
+  const filteredComments = comments.filter(c => c.postId === parseInt(postId));
+  res.json(filteredComments);
+});
+
+app.post("/api/comments", (req, res) => {
+  const newComment = { 
+    ...req.body, 
+    id: Date.now().toString(), 
+    date: new Date().toISOString() 
+  };
+  comments.unshift(newComment);
+  res.json(newComment);
+});
+
+app.get("/api/admin/comments", checkAdmin, (req, res) => {
+  res.json(comments);
+});
+
+app.delete("/api/admin/comments/:id", checkAdmin, (req, res) => {
+  const { id } = req.params;
+  const index = comments.findIndex(c => c.id === id);
+  if (index === -1) return res.status(404).json({ error: "Commentaire non trouvé" });
+  comments.splice(index, 1);
+  res.json({ success: true });
+});
+
+app.post("/api/admin/posts", checkAdmin, (req, res) => {
+  const newPost = { ...req.body, id: Date.now(), date: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) };
+  posts.unshift(newPost);
+  res.json(newPost);
+});
+
+app.put("/api/admin/posts/:id", checkAdmin, (req, res) => {
+  const id = parseInt(req.params.id);
+  const index = posts.findIndex(p => p.id === id);
+  if (index === -1) return res.status(404).json({ error: "Post non trouvé" });
+  posts[index] = { ...posts[index], ...req.body };
+  res.json(posts[index]);
+});
+
+app.delete("/api/admin/posts/:id", checkAdmin, (req, res) => {
+  const id = parseInt(req.params.id);
+  const index = posts.findIndex(p => p.id === id);
+  if (index === -1) return res.status(404).json({ error: "Post non trouvé" });
+  posts.splice(index, 1);
+  res.json({ success: true });
+});
+
+app.post("/api/admin/projects", checkAdmin, (req, res) => {
+  const newProject = { ...req.body, id: Date.now().toString() };
+  projects.unshift(newProject);
+  res.json(newProject);
+});
+
+app.put("/api/admin/projects/:id", checkAdmin, (req, res) => {
+  const { id } = req.params;
+  const index = projects.findIndex(p => p.id === id);
+  if (index === -1) return res.status(404).json({ error: "Projet non trouvé" });
+  projects[index] = { ...projects[index], ...req.body };
+  res.json(projects[index]);
+});
+
+app.delete("/api/admin/projects/:id", checkAdmin, (req, res) => {
+  const { id } = req.params;
+  const index = projects.findIndex(p => p.id === id);
+  if (index === -1) return res.status(404).json({ error: "Projet non trouvé" });
+  projects.splice(index, 1);
+  res.json({ success: true });
+});
+
 app.post("/api/admin/login", (req, res) => {
   const { email, password } = req.body;
   const ip = req.ip || 'unknown';

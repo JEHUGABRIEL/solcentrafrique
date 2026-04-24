@@ -3,6 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { Calendar, User, ArrowRight, Search, X, Share2, Facebook, Linkedin, Loader2, MessageCircle, AlertCircle, CheckCircle2, MessageSquare, ImageIcon, Trash2, ChevronLeft, ChevronRight, Quote } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import { fetchPosts, fetchComments, createComment } from '../services/adminService';
+
+interface Post {
+  id: number;
+  title: string;
+  excerpt: string;
+  date: string;
+  author: string;
+  image: string;
+  category: string;
+}
 
 interface Comment {
   id: string;
@@ -79,15 +90,33 @@ function OptimizedBlogImage({ src, alt, className }: { src: string; alt: string;
 
 export default function Blog() {
   const { showToast } = useToast();
+  const [posts, setPosts] = useState<Post[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState("Tous");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [sharePost, setSharePost] = useState<{title: string, id: number} | null>(null);
   const [showCopied, setShowCopied] = useState(false);
-  const [selectedPost, setSelectedPost] = useState<typeof POSTS[0] | null>(null);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [selectedCommentImage, setSelectedCommentImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadPosts();
+  }, []);
+
+  const loadPosts = async () => {
+    try {
+      setIsLoading(true);
+      const data = await fetchPosts();
+      setPosts(data);
+      setError(null);
+    } catch (err) {
+      setError("Impossible de charger les articles du blog.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentForm, setCommentForm] = useState({ name: '', email: '', message: '', image: '' });
@@ -96,38 +125,42 @@ export default function Blog() {
   const COMMENTS_PER_PAGE = 5;
 
   useEffect(() => {
-    const savedComments = localStorage.getItem('blog_comments');
-    if (savedComments) {
-      setComments(JSON.parse(savedComments));
+    if (selectedPost) {
+      loadComments(selectedPost.id);
     }
-  }, []);
+  }, [selectedPost]);
 
-  const handleCommentSubmit = (e: React.FormEvent) => {
+  const loadComments = async (postId: number) => {
+    try {
+      const data = await fetchComments(postId);
+      setComments(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentForm.name || !commentForm.email || !commentForm.message) {
       showToast("Veuillez remplir tous les champs obligatoires.", "error");
       return;
     }
+    if (!selectedPost) return;
 
     setIsSubmittingComment(true);
-    setTimeout(() => {
-      const newComment: Comment = {
-        id: Math.random().toString(36).substr(2, 9),
-        postId: selectedPost!.id,
-        name: commentForm.name,
-        email: commentForm.email,
-        message: commentForm.message,
-        image: commentForm.image || undefined,
-        date: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
-      };
-
-      const updatedComments = [newComment, ...comments];
-      setComments(updatedComments);
-      localStorage.setItem('blog_comments', JSON.stringify(updatedComments));
-      setCommentForm({ name: '', email: '', message: '', image: '' });
-      setIsSubmittingComment(false);
+    try {
+      await createComment({
+        ...commentForm,
+        postId: selectedPost.id
+      });
       showToast("Merci pour votre commentaire !", "success");
-    }, 1000);
+      setCommentForm({ name: '', email: '', message: '', image: '' });
+      loadComments(selectedPost.id);
+    } catch (err) {
+      showToast("Erreur lors de l'envoi du commentaire", "error");
+    } finally {
+      setIsSubmittingComment(false);
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -148,23 +181,9 @@ export default function Blog() {
     commentsCurrentPage * COMMENTS_PER_PAGE
   );
 
-  const activePostForHelmet = selectedPost || (sharePost ? POSTS.find(p => p.id === sharePost.id) : null);
+  const activePostForHelmet = selectedPost || (sharePost ? posts.find(p => p.id === sharePost.id) : null);
 
-  useEffect(() => {
-    if (searchQuery || activeCategory !== "Tous") {
-      setIsLoading(true);
-      setError(null);
-      const timer = setTimeout(() => {
-        if (Math.random() < 0.05) {
-          setError("Échec de la récupération des articles. Veuillez réessayer.");
-        }
-        setIsLoading(false);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [searchQuery, activeCategory]);
-
-  const filteredPosts = POSTS.filter(post => {
+  const filteredPosts = posts.filter(post => {
     const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          post.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = activeCategory === "Tous" || post.category === activeCategory;
@@ -476,7 +495,7 @@ export default function Blog() {
                   <div className="h-px bg-gray-200 flex-1"></div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-8">
-                  {POSTS.filter(p => p.id !== selectedPost.id).slice(0, 2).map(post => (
+                  {posts.filter(p => p.id !== selectedPost.id).slice(0, 2).map(post => (
                     <motion.div 
                       key={post.id}
                       whileHover={{ y: -5 }}

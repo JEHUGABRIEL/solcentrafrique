@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PROJECTS } from '../constants';
-import { X, TrendingUp, Info, ChevronLeft, ChevronRight, Maximize2, Lock } from 'lucide-react';
+import { X, TrendingUp, Info, ChevronLeft, ChevronRight, Maximize2, Lock, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { fetchProjects } from '../services/adminService';
+import { Project } from '../types';
+import OptimizedImage from '../components/OptimizedImage';
 
 const categories = [
   { id: 'all', name: 'Tous les projets' },
@@ -12,34 +14,11 @@ const categories = [
   { id: 'institutional', name: 'Institutionnel' },
 ];
 
-function OptimizedImage({ src, alt, className, thumbnail }: { src: string; alt: string; className?: string; thumbnail?: boolean }) {
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  return (
-    <div className={`relative overflow-hidden ${className}`}>
-      {!isLoaded && (
-        <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
-          <Maximize2 className="h-6 w-6 text-gray-300" />
-        </div>
-      )}
-      <img
-        src={src}
-        alt={alt}
-        loading="lazy"
-        onLoad={() => setIsLoaded(true)}
-        className={`w-full h-full object-cover transition-all duration-700 ${
-          isLoaded 
-            ? 'opacity-100 scale-100 group-hover:scale-110' 
-            : 'opacity-0 scale-110'
-        }`}
-      />
-    </div>
-  );
-}
-
 export default function Portfolio() {
   const [filter, setFilter] = useState('all');
-  const [selectedProject, setSelectedProject] = useState<typeof PROJECTS[0] | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
@@ -47,6 +26,22 @@ export default function Portfolio() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
+
+  const loadProjects = async () => {
+    try {
+      setIsLoading(true);
+      const data = await fetchProjects();
+      setProjects(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const paginate = (newDirection: number) => {
     if (!selectedProject?.images) return;
@@ -59,7 +54,7 @@ export default function Portfolio() {
     });
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     let interval: NodeJS.Timeout;
     if (selectedProject && selectedProject.images && selectedProject.images.length > 1 && autoplay && !isZoomed) {
       interval = setInterval(() => {
@@ -70,10 +65,10 @@ export default function Portfolio() {
   }, [selectedProject, selectedProject?.images, autoplay, isZoomed]);
 
   const filteredProjects = filter === 'all' 
-    ? PROJECTS 
-    : PROJECTS.filter(p => p.category === filter);
+    ? projects 
+    : projects.filter(p => p.category === filter);
 
-  const handleProjectSelect = (project: typeof PROJECTS[0]) => {
+  const handleProjectSelect = (project: Project) => {
     setSelectedProject(project);
     setActiveImageIndex(0);
     setIsZoomed(false);
@@ -129,59 +124,67 @@ export default function Portfolio() {
         </nav>
 
         {/* Projects Grid */}
-        <motion.div 
-          layout
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
-        >
-          <AnimatePresence mode='popLayout'>
-            {filteredProjects.map((project, idx) => (
-              <motion.div
-                layout
-                key={project.id}
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                transition={{ 
-                  duration: 0.4,
-                  delay: idx * 0.05,
-                  layout: { duration: 0.3 }
-                }}
-                onClick={() => handleProjectSelect(project)}
-                className="group cursor-pointer relative bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 border border-gray-100 focus-within:ring-4 focus-within:ring-brand-primary/20 outline-none"
-                role="button"
-                aria-label={`Voir les détails du projet: ${project.title}`}
-                tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && handleProjectSelect(project)}
-              >
-                <div className="aspect-[4/3] overflow-hidden">
-                  <OptimizedImage 
-                    src={project.image} 
-                    alt={`Installation solaire: ${project.title}`} 
-                    className="w-full h-full"
-                  />
-                  <div className="absolute inset-0 bg-brand-secondary/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <span className="bg-white text-brand-secondary px-6 py-2 rounded-full font-bold text-sm flex items-center gap-2">
-                      <Info className="h-4 w-4" /> Détails
-                    </span>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-24">
+            <Loader2 className="h-10 w-10 animate-spin text-brand-primary mb-4" />
+            <p className="text-gray-500 font-bold">Chargement des réalisations...</p>
+          </div>
+        ) : (
+          <motion.div 
+            layout
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
+          >
+            <AnimatePresence mode='popLayout'>
+              {filteredProjects.map((project, idx) => (
+                <motion.div
+                  layout
+                  key={project.id}
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                  transition={{ 
+                    duration: 0.4,
+                    delay: idx * 0.05,
+                    layout: { duration: 0.3 }
+                  }}
+                  onClick={() => handleProjectSelect(project)}
+                  className="group cursor-pointer relative bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 border border-gray-100 focus-within:ring-4 focus-within:ring-brand-primary/20 outline-none"
+                  role="button"
+                  aria-label={`Voir les détails du projet: ${project.title}`}
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && handleProjectSelect(project)}
+                >
+                  <div className="aspect-[4/3] overflow-hidden">
+                    <OptimizedImage 
+                      src={project.image} 
+                      alt={`Installation solaire: ${project.title}`} 
+                      className="w-full h-full"
+                      imgClassName="group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-brand-secondary/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="bg-white text-brand-secondary px-6 py-2 rounded-full font-bold text-sm flex items-center gap-2">
+                        <Info className="h-4 w-4" /> Détails
+                      </span>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="p-8">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-brand-accent text-xs font-bold uppercase tracking-wider">
-                      {categories.find(c => c.id === project.category)?.name}
-                    </span>
-                    <span className="text-brand-primary font-bold text-xs">{project.roi}</span>
+                  
+                  <div className="p-8">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-brand-accent text-xs font-bold uppercase tracking-wider">
+                        {categories.find(c => c.id === project.category)?.name}
+                      </span>
+                      <span className="text-brand-primary font-bold text-xs">{project.roi}</span>
+                    </div>
+                    <h3 className="text-xl font-bold text-brand-secondary mb-4">{project.title}</h3>
+                    <p className="text-gray-500 text-sm line-clamp-2">{project.description}</p>
                   </div>
-                  <h3 className="text-xl font-bold text-brand-secondary mb-4">{project.title}</h3>
-                  <p className="text-gray-500 text-sm line-clamp-2">{project.description}</p>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        )}
         
-        {filteredProjects.length === 0 && (
+        {!isLoading && filteredProjects.length === 0 && (
           <div className="text-center py-24 text-gray-400" role="status">
             Aucun projet dans cette catégorie pour le moment.
           </div>

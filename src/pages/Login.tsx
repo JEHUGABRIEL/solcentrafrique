@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Sun, Lock, Mail, AlertCircle, Loader2, UserPlus, LogIn } from 'lucide-react';
+import { Sun, Lock, Mail, AlertCircle, Loader2, UserPlus, LogIn, ChevronLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -37,7 +38,16 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-brand-neutral flex items-center justify-center px-4 py-20">
+    <div className="min-h-screen bg-brand-neutral flex flex-col items-center justify-center px-4 py-20">
+      <Link 
+        to="/" 
+        className="mb-8 flex items-center gap-2 text-brand-secondary font-bold hover:text-brand-primary transition-colors group"
+      >
+        <div className="bg-white p-2 rounded-full shadow-sm group-hover:shadow-md transition-all">
+          <ChevronLeft className="h-5 w-5" />
+        </div>
+        Retour à l'accueil
+      </Link>
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingCart, Check, Filter, Search, ShoppingBag, MessageSquare, Heart, HeartOff, Loader2, Lock, Clock as ClockIcon } from 'lucide-react';
+import OptimizedImage from '../components/OptimizedImage';
 
 const Countdown = ({ expiryDate }: { expiryDate: string }) => {
   const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, minutes: number, seconds: number } | null>(null);
@@ -167,11 +168,11 @@ export default function Shop() {
                   className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all border border-gray-100 flex flex-col group relative"
                 >
                   <div className="aspect-square relative overflow-hidden bg-brand-neutral">
-                    <img 
+                    <OptimizedImage 
                       src={product.image} 
                       alt={product.title}
-                      loading="lazy"
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                      className="w-full h-full"
+                      imgClassName="group-hover:scale-110 transition-transform duration-1000"
                     />
                     <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
                       <div className="bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-bold uppercase text-brand-primary shadow-sm self-start">

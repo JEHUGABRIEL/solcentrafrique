@@ -7,9 +7,15 @@ import {
 import { 
   BarChart3, Users, Zap, ClipboardList, TrendingUp, DollarSign, 
   Download, RefreshCcw, AlertCircle, LogOut, Loader2, Search, Bell, X, Mail,
-  Layout, MessageSquare, ImageIcon, Edit3, Trash2, Plus, ArrowRight, User as UserIcon, Settings, Shield
+  Layout, MessageSquare, ImageIcon, Edit3, Trash2, Plus, ArrowRight, User as UserIcon, Settings, Shield,
+  CheckCircle2
 } from 'lucide-react';
-import { fetchDashboardData, exportToCSV, DashboardData } from '../services/adminService';
+import { 
+  fetchDashboardData, exportToCSV, DashboardData, 
+  fetchPosts, createPost, updatePost, deletePost,
+  createProject, updateProject, deleteProject,
+  fetchComments, deleteComment
+} from '../services/adminService';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -18,6 +24,8 @@ const COLORS = ['#FFD700', '#1A2E35', '#FF4D00'];
 
 export default function AdminDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [comments, setComments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +34,33 @@ export default function AdminDashboard() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [activeTab, setActiveTab] = useState<'stats' | 'content' | 'profile'>('stats');
+  
+  // Post Management State
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<any>(null);
+  const [postForm, setPostForm] = useState({
+    title: '',
+    excerpt: '',
+    category: 'Actualités',
+    author: 'Admin SOL!',
+    image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=60&w=800'
+  });
+  const [isPostSubmitting, setIsPostSubmitting] = useState(false);
+
+  // Project Management State
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<any>(null);
+  const [projectForm, setProjectForm] = useState({
+    title: '',
+    description: '',
+    category: 'residential',
+    roi: '',
+    image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=80&w=1200',
+    images: [] as string[]
+  });
+  const [isProjectSubmitting, setIsProjectSubmitting] = useState(false);
+  const [newProjectImage, setNewProjectImage] = useState('');
+
   const navigate = useNavigate();
   const { isAdmin, logout } = useAuth();
   const { showToast } = useToast();
@@ -46,8 +81,14 @@ export default function AdminDashboard() {
     
     setError(null);
     try {
-      const response = await fetchDashboardData();
-      setData(response);
+      const [dashboardResponse, postsResponse, commentsResponse] = await Promise.all([
+        fetchDashboardData(),
+        fetchPosts(),
+        fetchComments()
+      ]);
+      setData(dashboardResponse);
+      setPosts(postsResponse);
+      setComments(commentsResponse);
       loadLeads();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue");
@@ -87,9 +128,119 @@ export default function AdminDashboard() {
     setShowNotifications(false);
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handlePostSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsPostSubmitting(true);
+    try {
+      if (editingPost) {
+        await updatePost(editingPost.id, postForm);
+        showToast("Article mis à jour !", "success");
+      } else {
+        await createPost(postForm);
+        showToast("Article publié !", "success");
+      }
+      setIsPostModalOpen(false);
+      setEditingPost(null);
+      setPostForm({
+        title: '',
+        excerpt: '',
+        category: 'Actualités',
+        author: 'Admin SOL!',
+        image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=60&w=800'
+      });
+      loadData(true);
+    } catch (err) {
+      showToast("Erreur lors de l'enregistrement", "error");
+    } finally {
+      setIsPostSubmitting(false);
+    }
+  };
+
+  const handleDeletePost = async (id: number) => {
+    if (!confirm("Supprimer cet article ?")) return;
+    try {
+      await deletePost(id);
+      showToast("Article supprimé", "success");
+      loadData(true);
+    } catch (err) {
+      showToast("Erreur de suppression", "error");
+    }
+  };
+
+  const handleEditPost = (post: any) => {
+    setEditingPost(post);
+    setPostForm({
+      title: post.title,
+      excerpt: post.excerpt,
+      category: post.category,
+      author: post.author,
+      image: post.image
+    });
+    setIsPostModalOpen(true);
+  };
+
+  const handleProjectSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsProjectSubmitting(true);
+    try {
+      if (editingProject) {
+        await updateProject(editingProject.id, projectForm);
+        showToast("Projet mis à jour !", "success");
+      } else {
+        await createProject(projectForm);
+        showToast("Projet ajouté au portfolio !", "success");
+      }
+      setIsProjectModalOpen(false);
+      setEditingProject(null);
+      setProjectForm({
+        title: '',
+        description: '',
+        category: 'residential',
+        roi: '',
+        image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=80&w=1200',
+        images: []
+      });
+      loadData(true);
+    } catch (err) {
+      showToast("Erreur lors de l'enregistrement", "error");
+    } finally {
+      setIsProjectSubmitting(false);
+    }
+  };
+
+  const handleDeleteProject = async (id: string) => {
+    if (!confirm("Supprimer ce projet du portfolio ?")) return;
+    try {
+      await deleteProject(id);
+      showToast("Projet supprimé", "success");
+      loadData(true);
+    } catch (err) {
+      showToast("Erreur de suppression", "error");
+    }
+  };
+
+  const handleEditProject = (project: any) => {
+    setEditingProject(project);
+    setProjectForm({
+      title: project.title,
+      description: project.description,
+      category: project.category,
+      roi: project.roi,
+      image: project.image,
+      images: project.images || []
+    });
+    setIsProjectModalOpen(true);
+  };
+
+  const handleDeleteComment = async (id: string) => {
+    if (!confirm("Supprimer ce commentaire ?")) return;
+    try {
+      await deleteComment(id);
+      showToast("Commentaire supprimé", "success");
+      loadData(true);
+    } catch (err) {
+      showToast("Erreur de suppression", "error");
+    }
   };
 
   const onPieEnter = (_: any, index: number) => {
@@ -586,38 +737,145 @@ export default function AdminDashboard() {
             <div className="bg-white rounded-[2.5rem] border border-gray-100 overflow-hidden shadow-sm">
               <div className="p-10 border-b border-gray-50 flex justify-between items-center bg-brand-neutral/30">
                 <h3 className="font-black text-xl text-brand-secondary">Gestion des Articles</h3>
-                <button className="bg-brand-primary text-brand-secondary px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-brand-primary/20 hover:scale-105 active:scale-95 transition-all">
+                <button 
+                  onClick={() => {
+                    setEditingPost(null);
+                    setPostForm({
+                      title: '',
+                      excerpt: '',
+                      category: 'Actualités',
+                      author: 'Admin SOL!',
+                      image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=60&w=800'
+                    });
+                    setIsPostModalOpen(true);
+                  }}
+                  className="bg-brand-primary text-brand-secondary px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-brand-primary/20 hover:scale-105 active:scale-95 transition-all"
+                >
                   <Plus className="h-4 w-4" /> Nouvel Article
                 </button>
               </div>
               <div className="p-10 space-y-6">
-                {[
-                  { title: "Comment choisir la puissance de son kit solaire ?", date: "12/04/2026", cat: "Guides" },
-                  { title: "Le solaire en RCA : Quel avenir pour l'énergie ?", date: "05/04/2026", cat: "Actualités" },
-                  { title: "Entretien de vos panneaux : 5 conseils", date: "28/03/2026", cat: "Entretien" }
-                ].map((post, i) => (
-                  <div key={i} className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 bg-brand-neutral/20 rounded-3xl border border-transparent hover:border-brand-primary/20 transition-all">
+                {posts.map((post, i) => (
+                  <div key={post.id} className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 bg-brand-neutral/20 rounded-3xl border border-transparent hover:border-brand-primary/20 transition-all">
                     <div className="flex items-center gap-6">
                       <div className="w-16 h-16 bg-white rounded-2xl border border-gray-100 overflow-hidden">
-                        <img src={`https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=100`} alt="thumb" className="w-full h-full object-cover" />
+                        <img src={post.image} alt="thumb" className="w-full h-full object-cover" />
                       </div>
                       <div>
                         <h4 className="font-bold text-brand-secondary">{post.title}</h4>
                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
-                          {post.cat} • Publié le {post.date}
+                          {post.category} • Publié le {post.date}
                         </p>
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <button className="p-3 bg-white text-gray-400 hover:text-brand-primary rounded-xl transition-all shadow-sm">
+                      <button 
+                        onClick={() => handleEditPost(post)}
+                        className="p-3 bg-white text-gray-400 hover:text-brand-primary rounded-xl transition-all shadow-sm"
+                      >
                         <Edit3 className="h-4 w-4" />
                       </button>
-                      <button className="p-3 bg-white text-gray-400 hover:text-red-500 rounded-xl transition-all shadow-sm">
+                      <button 
+                        onClick={() => handleDeletePost(post.id)}
+                        className="p-3 bg-white text-gray-400 hover:text-red-500 rounded-xl transition-all shadow-sm"
+                      >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Project Management Section */}
+            <div className="bg-white rounded-[2.5rem] border border-gray-100 overflow-hidden shadow-sm">
+              <div className="p-10 border-b border-gray-50 flex justify-between items-center bg-brand-neutral/30">
+                <h3 className="font-black text-xl text-brand-secondary">Gestion du Portfolio</h3>
+                <button 
+                  onClick={() => {
+                    setEditingProject(null);
+                    setProjectForm({
+                      title: '',
+                      description: '',
+                      category: 'residential',
+                      roi: '',
+                      image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=80&w=1200',
+                      images: []
+                    });
+                    setIsProjectModalOpen(true);
+                  }}
+                  className="bg-brand-primary text-brand-secondary px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-brand-primary/20 hover:scale-105 active:scale-95 transition-all"
+                >
+                  <Plus className="h-4 w-4" /> Nouveau Projet
+                </button>
+              </div>
+              <div className="p-10 space-y-6">
+                {data.recentProjects.map((project, i) => ( // Using recentProjects as list for now
+                  <div key={project.id} className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 bg-brand-neutral/20 rounded-3xl border border-transparent hover:border-brand-primary/20 transition-all">
+                    <div className="flex items-center gap-6">
+                      <div className="w-16 h-16 bg-white rounded-2xl border border-gray-100 flex items-center justify-center overflow-hidden">
+                        <Zap className="h-6 w-6 text-brand-primary" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-brand-secondary">{project.name}</h4>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
+                           Client: {project.client} • {project.status}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => handleEditProject(project)}
+                        className="p-3 bg-white text-gray-400 hover:text-brand-primary rounded-xl transition-all shadow-sm"
+                      >
+                        <Edit3 className="h-4 w-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteProject(project.id)}
+                        className="p-3 bg-white text-gray-400 hover:text-red-500 rounded-xl transition-all shadow-sm"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Comments Management Section */}
+            <div className="bg-white rounded-[2.5rem] border border-gray-100 overflow-hidden shadow-sm">
+              <div className="p-10 border-b border-gray-50 flex justify-between items-center bg-brand-neutral/30">
+                <h3 className="font-black text-xl text-brand-secondary">Gestion des Commentaires</h3>
+              </div>
+              <div className="p-10 space-y-6">
+                {comments.length === 0 ? (
+                  <div className="text-center py-12 text-gray-400 font-bold uppercase tracking-widest text-xs">
+                    Aucun commentaire pour le moment
+                  </div>
+                ) : (
+                  comments.map((comment, i) => (
+                    <div key={comment.id} className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 bg-brand-neutral/20 rounded-3xl border border-transparent hover:border-brand-primary/20 transition-all">
+                      <div className="flex items-center gap-6">
+                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center border border-gray-100 uppercase font-black text-brand-secondary text-xs">
+                          {comment.name.substring(0, 2)}
+                        </div>
+                        <div>
+                          <p className="font-bold text-brand-secondary">{comment.name}</p>
+                          <p className="text-xs text-brand-primary font-medium">{posts.find(p => p.id === comment.postId)?.title || 'Article inconnu'}</p>
+                          <p className="text-sm text-gray-500 mt-2 line-clamp-2 italic">"{comment.message}"</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="p-3 bg-white text-gray-400 hover:text-red-500 rounded-xl transition-all shadow-sm"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -705,6 +963,237 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+
+      {/* Post Modal */}
+      <AnimatePresence>
+        {isPostModalOpen && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setIsPostModalOpen(false)}
+              className="absolute inset-0 bg-brand-secondary/60 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative bg-white rounded-[2.5rem] w-full max-w-2xl p-10 shadow-2xl overflow-hidden"
+            >
+              <button 
+                onClick={() => setIsPostModalOpen(false)} 
+                className="absolute top-6 right-6 p-2 text-gray-400 hover:text-brand-secondary"
+              >
+                <X className="h-6 w-6" />
+              </button>
+              
+              <h3 className="text-3xl font-black text-brand-secondary mb-8 tracking-tighter">
+                {editingPost ? 'Modifier l\'article' : 'Publier un article'}
+              </h3>
+
+              <form onSubmit={handlePostSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Titre de l'article</label>
+                  <input 
+                    type="text" required
+                    value={postForm.title}
+                    onChange={(e) => setPostForm({...postForm, title: e.target.value})}
+                    placeholder="Ex: Nouveaux panneaux solaires à Bangui"
+                    className="w-full bg-brand-neutral border border-gray-100 px-6 py-4 rounded-2xl focus:border-brand-primary outline-none transition-all"
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Catégorie</label>
+                    <select 
+                      value={postForm.category}
+                      onChange={(e) => setPostForm({...postForm, category: e.target.value})}
+                      className="w-full bg-brand-neutral border border-gray-100 px-6 py-4 rounded-2xl focus:border-brand-primary outline-none transition-all"
+                    >
+                      <option>Actualités</option>
+                      <option>Guides</option>
+                      <option>Entretien</option>
+                      <option>Projets</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Auteur</label>
+                    <input 
+                      type="text" required
+                      value={postForm.author}
+                      onChange={(e) => setPostForm({...postForm, author: e.target.value})}
+                      className="w-full bg-brand-neutral border border-gray-100 px-6 py-4 rounded-2xl focus:border-brand-primary outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Résumé / Excerpt</label>
+                  <textarea 
+                    required rows={3}
+                    value={postForm.excerpt}
+                    onChange={(e) => setPostForm({...postForm, excerpt: e.target.value})}
+                    placeholder="Bref résumé de l'article..."
+                    className="w-full bg-brand-neutral border border-gray-100 px-6 py-4 rounded-2xl focus:border-brand-primary outline-none transition-all resize-none"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">URL de l'image (Unsplash)</label>
+                  <input 
+                    type="url" required
+                    value={postForm.image}
+                    onChange={(e) => setPostForm({...postForm, image: e.target.value})}
+                    className="w-full bg-brand-neutral border border-gray-100 px-6 py-4 rounded-2xl focus:border-brand-primary outline-none transition-all"
+                  />
+                </div>
+
+                <button 
+                  type="submit"
+                  disabled={isPostSubmitting}
+                  className="w-full bg-brand-secondary text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-brand-primary hover:text-brand-secondary transition-all shadow-xl flex items-center justify-center gap-3 disabled:opacity-50"
+                >
+                  {isPostSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : editingPost ? 'Mettre à jour' : 'Publier maintenant'}
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Project Modal */}
+      <AnimatePresence>
+        {isProjectModalOpen && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setIsProjectModalOpen(false)}
+              className="absolute inset-0 bg-brand-secondary/60 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative bg-white rounded-[2.5rem] w-full max-w-2xl p-10 shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+            >
+              <button 
+                onClick={() => setIsProjectModalOpen(false)} 
+                className="absolute top-6 right-6 p-2 text-gray-400 hover:text-brand-secondary"
+              >
+                <X className="h-6 w-6" />
+              </button>
+              
+              <h3 className="text-3xl font-black text-brand-secondary mb-8 tracking-tighter">
+                {editingProject ? 'Modifier le projet' : 'Ajouter un projet'}
+              </h3>
+
+              <form onSubmit={handleProjectSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Nom du Projet</label>
+                  <input 
+                    type="text" required
+                    value={projectForm.title}
+                    onChange={(e) => setProjectForm({...projectForm, title: e.target.value})}
+                    placeholder="Ex: Villa Solaire Bangui"
+                    className="w-full bg-brand-neutral border border-gray-100 px-6 py-4 rounded-2xl focus:border-brand-primary outline-none transition-all"
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Catégorie</label>
+                    <select 
+                      value={projectForm.category}
+                      onChange={(e) => setProjectForm({...projectForm, category: e.target.value})}
+                      className="w-full bg-brand-neutral border border-gray-100 px-6 py-4 rounded-2xl focus:border-brand-primary outline-none transition-all"
+                    >
+                      <option value="residential">Résidentiel</option>
+                      <option value="commercial">Commercial</option>
+                      <option value="industrial">Industriel</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Économies (ROI)</label>
+                    <input 
+                      type="text" required
+                      value={projectForm.roi}
+                      onChange={(e) => setPostForm({...projectForm, roi: e.target.value})}
+                      placeholder="Ex: 500.000 FCFA/an"
+                      className="w-full bg-brand-neutral border border-gray-100 px-6 py-4 rounded-2xl focus:border-brand-primary outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Description</label>
+                  <textarea 
+                    required rows={3}
+                    value={projectForm.description}
+                    onChange={(e) => setProjectForm({...projectForm, description: e.target.value})}
+                    className="w-full bg-brand-neutral border border-gray-100 px-6 py-4 rounded-2xl focus:border-brand-primary outline-none transition-all resize-none"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Image Principale (URL)</label>
+                  <input 
+                    type="url" required
+                    value={projectForm.image}
+                    onChange={(e) => setProjectForm({...projectForm, image: e.target.value})}
+                    className="w-full bg-brand-neutral border border-gray-100 px-6 py-4 rounded-2xl focus:border-brand-primary outline-none transition-all"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Galerie Photos</label>
+                   <div className="flex gap-2">
+                      <input 
+                        type="url"
+                        value={newProjectImage}
+                        onChange={(e) => setNewProjectImage(e.target.value)}
+                        placeholder="Ajouter une URL d'image..."
+                        className="flex-1 bg-brand-neutral border border-gray-100 px-6 py-4 rounded-2xl focus:border-brand-primary outline-none transition-all"
+                      />
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          if (newProjectImage) {
+                            setProjectForm({...projectForm, images: [...projectForm.images, newProjectImage]});
+                            setNewProjectImage('');
+                          }
+                        }}
+                        className="px-6 bg-brand-primary text-brand-secondary rounded-2xl font-bold"
+                      >
+                        Ajouter
+                      </button>
+                   </div>
+                   <div className="grid grid-cols-4 gap-2">
+                      {projectForm.images.map((img, idx) => (
+                        <div key={idx} className="relative group aspect-square">
+                          <img src={img} className="w-full h-full object-cover rounded-xl" />
+                          <button 
+                            onClick={() => setProjectForm({...projectForm, images: projectForm.images.filter((_, i) => i !== idx)})}
+                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                   </div>
+                </div>
+
+                <button 
+                  type="submit"
+                  disabled={isProjectSubmitting}
+                  className="w-full bg-brand-secondary text-white py-5 rounded-2xl font-black uppercase tracking-widest hover:bg-brand-primary hover:text-brand-secondary transition-all shadow-xl flex items-center justify-center gap-3 disabled:opacity-50"
+                >
+                  {isProjectSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : editingProject ? 'Mettre à jour le projet' : 'Ajouter au Portfolio'}
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

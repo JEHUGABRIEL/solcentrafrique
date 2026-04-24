@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Zap, ShieldCheck, Leaf, Star, Phone, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SERVICES, PROJECTS, TESTIMONIALS } from '../constants';
 import { Link } from 'react-router-dom';
+import OptimizedImage from '../components/OptimizedImage';
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -49,16 +50,16 @@ export default function Home() {
         <AnimatePresence mode="wait">
           <motion.div
             key={currentSlide}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1 }}
+            initial={{ opacity: 0, scale: 1.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
             className="absolute inset-0 z-0"
           >
             <div className="absolute inset-0 bg-brand-secondary/60 backdrop-blur-[2px] z-[1]" />
               <img 
                 src={HERO_SLIDES[currentSlide].image} 
-                className="w-full h-full object-cover scale-105"
+                className="w-full h-full object-cover"
                 style={{ filter: 'brightness(0.7)' }}
                 alt="Installation SOL!"
               />
@@ -312,7 +313,12 @@ export default function Home() {
               >
                 <Link to="/blog">
                   <div className="relative h-64 rounded-3xl overflow-hidden mb-6">
-                    <img src={post.image} alt={post.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
+                    <OptimizedImage 
+                      src={post.image} 
+                      alt={post.title} 
+                      className="w-full h-full" 
+                      imgClassName="group-hover:scale-110 transition-transform duration-700"
+                    />
                     <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-4 py-1 rounded-full text-[10px] font-black text-brand-secondary uppercase tracking-widest">{post.cat}</div>
                   </div>
                   <p className="text-xs font-bold text-gray-400 mb-2">{post.date}</p>

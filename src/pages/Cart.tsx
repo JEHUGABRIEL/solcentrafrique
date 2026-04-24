@@ -96,10 +96,11 @@ export default function Cart() {
                   
                   <button 
                     onClick={() => removeFromCart(item.id)}
-                    className="p-3 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                    className="flex items-center gap-2 px-4 py-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all border border-transparent hover:border-red-100"
                     aria-label="Supprimer du panier"
                   >
-                    <Trash2 className="h-5 w-5" />
+                    <Trash2 className="h-4 w-4" />
+                    <span className="text-xs font-bold uppercase tracking-wider hidden sm:inline">Retirer</span>
                   </button>
                 </motion.div>
               ))}
