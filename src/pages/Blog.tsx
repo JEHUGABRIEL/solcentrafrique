@@ -66,11 +66,13 @@ export default function Blog() {
   const [sharePost, setSharePost] = useState<{title: string, id: number} | null>(null);
   const [showCopied, setShowCopied] = useState(false);
   const [selectedPost, setSelectedPost] = useState<typeof POSTS[0] | null>(null);
+  const [selectedCommentImage, setSelectedCommentImage] = useState<string | null>(null);
   
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentForm, setCommentForm] = useState({ name: '', email: '', message: '', image: '' });
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-  const [commentCarouselIndex, setCommentCarouselIndex] = useState(0);
+  const [commentsCurrentPage, setCommentsCurrentPage] = useState(1);
+  const COMMENTS_PER_PAGE = 5;
 
   useEffect(() => {
     const savedComments = localStorage.getItem('blog_comments');
@@ -119,18 +121,11 @@ export default function Blog() {
   };
 
   const currentPostComments = comments.filter(c => c.postId === selectedPost?.id);
-
-  const nextComment = () => {
-    if (currentPostComments.length > 0) {
-      setCommentCarouselIndex((prev) => (prev + 1) % currentPostComments.length);
-    }
-  };
-
-  const prevComment = () => {
-    if (currentPostComments.length > 0) {
-      setCommentCarouselIndex((prev) => (prev - 1 + currentPostComments.length) % currentPostComments.length);
-    }
-  };
+  const totalCommentsPages = Math.ceil(currentPostComments.length / COMMENTS_PER_PAGE);
+  const paginatedComments = currentPostComments.slice(
+    (commentsCurrentPage - 1) * COMMENTS_PER_PAGE,
+    commentsCurrentPage * COMMENTS_PER_PAGE
+  );
 
   const activePostForHelmet = selectedPost || (sharePost ? POSTS.find(p => p.id === sharePost.id) : null);
 
@@ -284,63 +279,69 @@ export default function Blog() {
                   <div className="h-px bg-gray-200 flex-1"></div>
                 </div>
 
-                {/* Comments Carousel */}
+                {/* Comments List with Pagination */}
                 {currentPostComments.length > 0 ? (
-                  <div className="relative mb-20">
-                    <div className="overflow-hidden">
-                      <AnimatePresence mode="wait">
-                        <motion.div
-                          key={currentPostComments[commentCarouselIndex].id}
-                          initial={{ opacity: 0, x: 50 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -50 }}
-                          className="bg-white p-10 rounded-[3rem] shadow-xl border border-gray-100"
-                        >
-                          <div className="flex flex-col md:flex-row gap-8">
-                            {currentPostComments[commentCarouselIndex].image && (
-                              <div className="w-full md:w-32 h-32 rounded-2xl overflow-hidden flex-shrink-0">
-                                <img 
-                                  src={currentPostComments[commentCarouselIndex].image} 
-                                  alt="Comment attachment" 
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                            )}
-                            <div className="flex-1">
-                              <div className="flex justify-between items-start mb-4">
-                                <div>
-                                  <h4 className="font-black text-brand-secondary text-lg">{currentPostComments[commentCarouselIndex].name}</h4>
-                                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{currentPostComments[commentCarouselIndex].date}</p>
+                  <div className="space-y-8 mb-20">
+                    <div className="grid gap-6">
+                      <AnimatePresence mode="popLayout">
+                        {paginatedComments.map((comment) => (
+                          <motion.div
+                            key={comment.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-white p-8 rounded-[2.5rem] shadow-xl shadow-brand-secondary/5 border border-gray-100"
+                          >
+                            <div className="flex flex-col md:flex-row gap-8">
+                              {comment.image && (
+                                <div 
+                                  className="w-full md:w-32 h-32 rounded-2xl overflow-hidden flex-shrink-0 cursor-zoom-in relative group/img"
+                                  onClick={() => setSelectedCommentImage(comment.image!)}
+                                >
+                                  <img 
+                                    src={comment.image} 
+                                    alt="Comment attachment" 
+                                    className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-500"
+                                  />
+                                  <div className="absolute inset-0 bg-brand-secondary/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity">
+                                    <ImageIcon className="h-6 w-6 text-white" />
+                                  </div>
                                 </div>
-                                <Quote className="h-10 w-10 text-brand-primary/10" />
+                              )}
+                              <div className="flex-1">
+                                <div className="flex justify-between items-start mb-4">
+                                  <div>
+                                    <h4 className="font-black text-brand-secondary text-lg">{comment.name}</h4>
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{comment.date}</p>
+                                  </div>
+                                  <Quote className="h-8 w-8 text-brand-primary/10" />
+                                </div>
+                                <p className="text-gray-600 leading-relaxed font-medium">
+                                  {comment.message}
+                                </p>
                               </div>
-                              <p className="text-gray-600 leading-relaxed italic">
-                                "{currentPostComments[commentCarouselIndex].message}"
-                              </p>
                             </div>
-                          </div>
-                        </motion.div>
+                          </motion.div>
+                        ))}
                       </AnimatePresence>
                     </div>
-                    {currentPostComments.length > 1 && (
-                      <div className="flex justify-center gap-4 mt-8">
+
+                    {totalCommentsPages > 1 && (
+                      <div className="flex justify-center items-center gap-4 py-8">
                         <button 
-                          onClick={prevComment}
-                          className="p-3 bg-white border border-gray-100 rounded-xl text-brand-secondary hover:bg-brand-primary transition-all shadow-sm"
+                          onClick={() => setCommentsCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={commentsCurrentPage === 1}
+                          className="p-4 bg-white border border-gray-100 rounded-2xl text-brand-secondary hover:bg-brand-primary disabled:opacity-30 transition-all shadow-sm"
                         >
                           <ChevronLeft className="h-5 w-5" />
                         </button>
-                        <div className="flex items-center gap-2">
-                          {currentPostComments.map((_, i) => (
-                            <div 
-                              key={i} 
-                              className={`h-1.5 rounded-full transition-all ${i === commentCarouselIndex ? 'w-6 bg-brand-primary' : 'w-1.5 bg-gray-200'}`} 
-                            />
-                          ))}
-                        </div>
+                        <span className="text-xs font-black uppercase tracking-widest text-brand-secondary">
+                          Page {commentsCurrentPage} <span className="text-gray-400">/ {totalCommentsPages}</span>
+                        </span>
                         <button 
-                          onClick={nextComment}
-                          className="p-3 bg-white border border-gray-100 rounded-xl text-brand-secondary hover:bg-brand-primary transition-all shadow-sm"
+                          onClick={() => setCommentsCurrentPage(p => Math.min(totalCommentsPages, p + 1))}
+                          disabled={commentsCurrentPage === totalCommentsPages}
+                          className="p-4 bg-white border border-gray-100 rounded-2xl text-brand-secondary hover:bg-brand-primary disabled:opacity-30 transition-all shadow-sm"
                         >
                           <ChevronRight className="h-5 w-5" />
                         </button>
@@ -625,6 +626,39 @@ export default function Blog() {
                   <span className="font-bold text-sm text-gray-600">{showCopied ? 'Copié !' : 'Lien'}</span>
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {selectedCommentImage && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              onClick={() => setSelectedCommentImage(null)} 
+              className="absolute inset-0 bg-brand-secondary/95 backdrop-blur-md" 
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }} 
+              animate={{ opacity: 1, scale: 1 }} 
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="relative max-w-5xl w-full max-h-[90vh] flex flex-col items-center"
+            >
+              <button 
+                onClick={() => setSelectedCommentImage(null)} 
+                className="absolute -top-12 right-0 p-2 text-white/60 hover:text-white transition-colors"
+                aria-label="Fermer"
+              >
+                <X className="h-8 w-8" />
+              </button>
+              <img 
+                src={selectedCommentImage} 
+                alt="Comment detail" 
+                className="w-full h-full object-contain rounded-3xl shadow-2xl"
+              />
             </motion.div>
           </div>
         )}
