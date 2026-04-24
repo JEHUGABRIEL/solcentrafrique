@@ -131,6 +131,15 @@ export default function App() {
             </div>
             
             <div>
+              <h4 className="font-bold mb-6">Liens Utiles</h4>
+              <ul className="space-y-4 text-gray-400 text-sm">
+                <li><Link to="/services" className="hover:text-brand-primary transition-colors">Nos Services</Link></li>
+                <li><Link to="/portfolio" className="hover:text-brand-primary transition-colors">Réalisations</Link></li>
+                <li><Link to="/contact" className="hover:text-brand-primary transition-colors">Contactez-nous</Link></li>
+              </ul>
+            </div>
+            
+            <div>
               <h4 className="font-bold mb-6">Contact</h4>
               <ul className="space-y-4 text-gray-400 text-sm">
                 <li className="flex items-center gap-2"><MapPin className="h-4 w-4 text-brand-primary" /> Bangui, RCA</li>

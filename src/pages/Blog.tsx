@@ -177,12 +177,20 @@ export default function Blog() {
                     </p>
                   </div>
 
-                  <div className="mt-12 pt-12 border-t border-gray-100 flex justify-between items-center">
+                  <div className="mt-12 pt-12 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-8">
+                    <div className="flex items-center gap-4">
+                      <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Partager :</p>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleShare('facebook', selectedPost.title)} className="p-3 bg-[#1877F2]/10 text-[#1877F2] rounded-xl hover:bg-[#1877F2] hover:text-white transition-all"><Facebook className="h-5 w-5" /></button>
+                        <button onClick={() => handleShare('linkedin', selectedPost.title)} className="p-3 bg-[#0A66C2]/10 text-[#0A66C2] rounded-xl hover:bg-[#0A66C2] hover:text-white transition-all"><Linkedin className="h-5 w-5" /></button>
+                        <button onClick={() => handleShare('whatsapp', selectedPost.title)} className="p-3 bg-green-100 text-green-600 rounded-xl hover:bg-green-600 hover:text-white transition-all"><MessageCircle className="h-5 w-5" /></button>
+                      </div>
+                    </div>
                     <button 
                       onClick={() => setSharePost({ title: selectedPost.title, id: selectedPost.id })}
                       className="flex items-center gap-2 bg-brand-neutral px-6 py-3 rounded-xl font-bold text-brand-secondary hover:bg-brand-primary transition-colors"
                     >
-                      <Share2 className="h-5 w-5" /> Partager l'article
+                      <Share2 className="h-5 w-5" /> Plus d'options
                     </button>
                   </div>
                 </div>
@@ -299,7 +307,9 @@ export default function Blog() {
                             <img src={post.image} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                             <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold text-brand-secondary">{post.category}</div>
                             <div className="absolute bottom-4 right-4 flex gap-2 translate-y-12 group-hover:translate-y-0 transition-transform">
-                              <button onClick={(e) => { e.stopPropagation(); setSharePost({ title: post.title, id: post.id }); }} className="bg-white text-brand-secondary p-3 rounded-xl shadow-lg hover:bg-brand-primary transition-colors flex items-center gap-2 font-bold text-xs"><Share2 className="h-4 w-4" /> Partager</button>
+                              <button onClick={(e) => { e.stopPropagation(); handleShare('facebook', post.title); }} className="bg-white text-[#1877F2] p-3 rounded-xl shadow-lg hover:bg-[#1877F2] hover:text-white transition-all"><Facebook className="h-4 w-4" /></button>
+                              <button onClick={(e) => { e.stopPropagation(); handleShare('whatsapp', post.title); }} className="bg-white text-green-600 p-3 rounded-xl shadow-lg hover:bg-green-600 hover:text-white transition-all"><MessageCircle className="h-4 w-4" /></button>
+                              <button onClick={(e) => { e.stopPropagation(); setSharePost({ title: post.title, id: post.id }); }} className="bg-white text-brand-secondary p-3 rounded-xl shadow-lg hover:bg-brand-primary transition-colors flex items-center gap-2 font-bold text-xs"><Share2 className="h-4 w-4" /></button>
                             </div>
                           </div>
                           <div className="p-8 flex-1 flex flex-col">

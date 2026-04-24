@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Phone, MapPin, Clock, Send, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Send, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 
 interface FormErrors {
   name?: string;
@@ -274,8 +274,15 @@ export default function Contact() {
                     disabled={isSubmitting}
                     className="w-full bg-brand-primary text-brand-secondary font-bold py-5 rounded-2xl flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-brand-primary/20 disabled:opacity-50 disabled:scale-100"
                   >
-                    {isSubmitting ? 'Envoi en cours...' : 'Envoyer ma demande'} 
-                    <Send className={`h-5 w-5 ${isSubmitting ? 'animate-pulse' : ''}`} />
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" /> Envoi en cours...
+                      </>
+                    ) : (
+                      <>
+                        Envoyer ma demande <Send className="h-5 w-5" />
+                      </>
+                    )}
                   </button>
                   
                   <p className="text-xs text-center text-gray-400 mt-4">

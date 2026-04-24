@@ -95,6 +95,18 @@ export default function Home() {
                   Nos réalisations
                 </Link>
               </div>
+              <motion.button 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1 }}
+                onClick={() => {
+                  const el = document.getElementById('latest-news');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="mt-8 text-white/60 hover:text-white font-bold flex items-center gap-2 group transition-colors"
+              >
+                Dernières Nouvelles <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </motion.button>
             </motion.div>
           </AnimatePresence>
         </div>
@@ -250,6 +262,62 @@ export default function Home() {
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5">Client SOL!</p>
                   </div>
                 </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Latest News */}
+      <section id="latest-news" className="py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+            <div>
+              <p className="text-brand-primary font-bold uppercase tracking-widest text-sm mb-2">Le Blog</p>
+              <h2 className="text-3xl md:text-5xl font-black text-brand-secondary tracking-tighter">Dernières Nouvelles</h2>
+            </div>
+            <Link to="/blog" className="text-brand-primary font-bold flex items-center gap-2 hover:gap-3 transition-all">
+              Toutes les actualités <ArrowRight className="h-5 w-5" />
+            </Link>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                title: "Le solaire en RCA : Quel avenir ?",
+                date: "05 Avril 2026",
+                image: "https://images.unsplash.com/photo-1466611653911-95282ee36567?auto=format&fit=crop&q=60&w=800",
+                cat: "Actualités"
+              },
+              {
+                title: "Choisir sa puissance solaire",
+                date: "12 Avril 2026",
+                image: "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=60&w=800",
+                cat: "Guides"
+              },
+              {
+                title: "Maintenance préventive à Bangui",
+                date: "28 Mars 2026",
+                image: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&q=60&w=800",
+                cat: "Entretien"
+              }
+            ].map((post, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="group cursor-pointer"
+              >
+                <Link to="/blog">
+                  <div className="relative h-64 rounded-3xl overflow-hidden mb-6">
+                    <img src={post.image} alt={post.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
+                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-4 py-1 rounded-full text-[10px] font-black text-brand-secondary uppercase tracking-widest">{post.cat}</div>
+                  </div>
+                  <p className="text-xs font-bold text-gray-400 mb-2">{post.date}</p>
+                  <h3 className="text-xl font-black text-brand-secondary group-hover:text-brand-primary transition-colors leading-tight">{post.title}</h3>
+                </Link>
               </motion.div>
             ))}
           </div>

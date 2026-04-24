@@ -135,6 +135,7 @@ export default function Shop() {
                     <img 
                       src={product.image} 
                       alt={product.title}
+                      loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                     />
                     <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-bold uppercase text-brand-primary shadow-sm z-10">
