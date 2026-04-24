@@ -1,8 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { SERVICES } from '../constants';
-import { CheckCircle2, TrendingUp, ShieldCheck, Clock, Home, Building2, Globe, Settings, ShoppingCart, Check, ArrowRight } from 'lucide-react';
+import { CheckCircle2, TrendingUp, ShieldCheck, Clock, Home, Building2, Globe, Settings, ShoppingCart, Check, ArrowRight, Lock } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -20,6 +23,10 @@ const iconMap: Record<string, React.ElementType> = {
 
 export default function Services() {
   const { addToCart, cart } = useCart();
+  const { isAuthenticated } = useAuth();
+  const { showToast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
   const isInCart = (id: string) => cart.some(item => item.id === id);
 
   return (
@@ -135,17 +142,24 @@ export default function Services() {
                 </div>
 
                 <button
-                  onClick={() => addToCart({ 
-                    id: service.id, 
-                    title: service.title,
-                    type: 'service',
-                    image: idx === 0 ? "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&q=60&w=800" : 
-                           idx === 1 ? "https://images.unsplash.com/photo-1509391366360-fe5bb58583bb?auto=format&fit=crop&q=60&w=800" :
-                           idx === 2 ? "https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?auto=format&fit=crop&q=60&w=800" :
-                           "https://images.unsplash.com/photo-1559302504-64aae6ca6b6d?auto=format&fit=crop&q=60&w=800"
-                  })}
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      navigate('/login', { state: { from: location } });
+                      return;
+                    }
+                    addToCart({ 
+                      id: service.id, 
+                      title: service.title,
+                      type: 'service',
+                      image: idx === 0 ? "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&q=60&w=800" : 
+                             idx === 1 ? "https://images.unsplash.com/photo-1509391366360-fe5bb58583bb?auto=format&fit=crop&q=60&w=800" :
+                             idx === 2 ? "https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?auto=format&fit=crop&q=60&w=800" :
+                             "https://images.unsplash.com/photo-1559302504-64aae6ca6b6d?auto=format&fit=crop&q=60&w=800"
+                    });
+                    showToast(`${service.title} ajouté à votre demande !`, 'success');
+                  }}
                   disabled={isInCart(service.id)}
-                  className={`w-full py-5 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all ${
+                  className={`w-full py-5 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all relative group ${
                     isInCart(service.id)
                       ? 'bg-green-100 text-green-600 cursor-default'
                       : 'bg-brand-secondary text-white hover:bg-brand-secondary/90 shadow-xl shadow-brand-secondary/20 hover:scale-[1.02]'
@@ -157,8 +171,15 @@ export default function Services() {
                     </>
                   ) : (
                     <>
-                      <ShoppingCart className="h-5 w-5" /> Ajouter à ma demande
+                      {!isAuthenticated && <Lock className="h-5 w-5" />}
+                      <ShoppingCart className="h-5 w-5" /> 
+                      {isAuthenticated ? 'Ajouter à ma demande' : 'Se connecter pour commander'}
                     </>
+                  )}
+                  {!isAuthenticated && (
+                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-brand-secondary text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                        Connexion requise
+                     </div>
                   )}
                 </button>
               </motion.div>

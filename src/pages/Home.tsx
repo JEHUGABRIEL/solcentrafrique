@@ -56,11 +56,12 @@ export default function Home() {
             className="absolute inset-0 z-0"
           >
             <div className="absolute inset-0 bg-brand-secondary/60 backdrop-blur-[2px] z-[1]" />
-            <img 
-              src={HERO_SLIDES[currentSlide].image} 
-              alt="Installation Solaire SOL! RCA" 
-              className="w-full h-full object-cover"
-            />
+              <img 
+                src={HERO_SLIDES[currentSlide].image} 
+                className="w-full h-full object-cover scale-105"
+                style={{ filter: 'brightness(0.7)' }}
+                alt="Installation SOL!"
+              />
           </motion.div>
         </AnimatePresence>
         
@@ -74,8 +75,8 @@ export default function Home() {
               transition={{ duration: 0.8 }}
               className="max-w-3xl"
             >
-              <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight mb-6">
-                {HERO_SLIDES[currentSlide].title}<span className="text-brand-primary">.</span>
+              <h1 className="text-6xl md:text-8xl font-black text-white leading-[0.9] mb-8 tracking-tighter">
+                {HERO_SLIDES[currentSlide].title}<span className="text-brand-primary">!</span>
               </h1>
               <p className="text-xl text-gray-200 mb-8 max-w-2xl font-light">
                 {HERO_SLIDES[currentSlide].subtitle}
@@ -132,120 +133,63 @@ export default function Home() {
       </section>
 
       {/* Why Solar? */}
-      <section className="py-24 bg-white">
+      <section className="py-24 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-brand-secondary mb-4">Pourquoi passer au solaire ?</h2>
-            <div className="w-20 h-1 bg-brand-primary mx-auto rounded-full" />
+          <div className="text-center mb-20">
+            <motion.p 
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-brand-primary font-bold uppercase tracking-[0.3em] text-sm mb-4"
+            >
+              Énergie Infinie
+            </motion.p>
+            <motion.h2 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="text-4xl md:text-6xl font-black text-brand-secondary tracking-tighter"
+            >
+              Pourquoi passer au solaire<span className="text-brand-primary"> ?</span>
+            </motion.h2>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-12">
+          <div className="grid md:grid-cols-3 gap-8">
             {[
               { 
                 icon: Zap, 
-                title: 'Économies', 
-                desc: 'Réduisez votre facture électrique de 60-80% dès le premier mois.' 
+                title: 'Économies Réelles', 
+                desc: 'Réduisez vos factures d\'électricité jusqu\'à 80% dès le premier mois d\'installation.',
+                color: 'bg-brand-primary/10 text-brand-primary'
               },
               { 
                 icon: ShieldCheck, 
-                title: 'Fiabilité', 
-                desc: 'Une électricité stable 24h/24 sans coupures ni dépendance au réseau.' 
+                title: 'Fiabilité Totale', 
+                desc: 'Fini les coupures de courant. Profitez d\'une énergie stable 24h/24, même la nuit.',
+                color: 'bg-brand-accent/10 text-brand-accent'
               },
               { 
                 icon: Leaf, 
-                title: 'Écologie', 
-                desc: 'Utilisez une énergie propre et inépuisable pour protéger notre biodiversité.' 
+                title: 'Engagement Nature', 
+                desc: 'Utilisez une énergie 100% propre pour protéger la biodiversité de notre pays.',
+                color: 'bg-brand-secondary/10 text-brand-secondary'
               }
             ].map((item, idx) => (
               <motion.div 
                 key={idx}
-                {...fadeIn}
-                transition={{ delay: idx * 0.1 }}
-                className="bg-brand-neutral p-8 rounded-3xl text-center hover:shadow-xl transition-all"
-              >
-                <div className="inline-flex p-4 bg-white rounded-2xl shadow-sm mb-6 text-brand-primary">
-                  <item.icon className="h-8 w-8" />
-                </div>
-                <h3 className="text-xl font-bold text-brand-secondary mb-3">{item.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{item.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Mini Services */}
-      <section className="py-24 bg-brand-secondary overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-            <div>
-              <p className="text-brand-primary font-bold uppercase tracking-widest text-sm mb-2">Nos Solutions</p>
-              <h2 className="text-3xl md:text-4xl font-bold text-white">Des services adaptés à vos besoins</h2>
-            </div>
-            <Link to="/services" className="text-brand-primary font-bold flex items-center gap-2 hover:translate-x-2 transition-transform">
-              Voir tout nos services <ArrowRight className="h-5 w-5" />
-            </Link>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {SERVICES.map((service, idx) => (
-              <motion.div 
-                key={service.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                whileHover={{ y: -8 }}
-                transition={{ delay: idx * 0.1, type: "spring", stiffness: 300 }}
-                className="bg-white/5 border border-white/10 p-8 rounded-2xl hover:bg-white/10 hover:shadow-2xl hover:shadow-brand-primary/10 transition-all group relative"
+                transition={{ delay: idx * 0.1, duration: 0.6 }}
+                whileHover={{ y: -10 }}
+                className="bg-brand-neutral/40 p-10 rounded-[3rem] border border-transparent hover:border-brand-primary/20 hover:bg-white hover:shadow-2xl transition-all group"
               >
-                <h3 className="text-xl font-bold text-white mb-4 pr-10">{service.title}</h3>
-                <p className="text-gray-400 text-sm mb-6 line-clamp-3">{service.description}</p>
-                <Link 
-                  to={`/services#${service.id}`} 
-                  className="text-brand-primary text-sm font-bold flex items-center gap-2 opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300"
-                >
-                  En savoir plus <ArrowRight className="h-4 w-4" />
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Portfolio Preview */}
-      <section className="py-24 bg-brand-neutral">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-            <div>
-              <p className="text-brand-accent font-bold uppercase tracking-widest text-sm mb-2">Portfolio</p>
-              <h2 className="text-3xl md:text-4xl font-bold text-brand-secondary">Nos derniers projets phares</h2>
-            </div>
-            <Link to="/portfolio" className="bg-brand-secondary text-white px-6 py-3 rounded-xl font-bold text-sm">
-              Découvrir tous les projets
-            </Link>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {PROJECTS.map((project, idx) => (
-              <motion.div 
-                key={project.id}
-                {...fadeIn}
-                transition={{ delay: idx * 0.1 }}
-                className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-gray-100"
-              >
-                <div className="h-56 overflow-hidden">
-                  <img src={project.image} alt={project.title} className="w-full h-full object-cover" />
+                <div className={`inline-flex p-5 rounded-2xl mb-8 group-hover:scale-110 group-hover:rotate-6 transition-transform ${item.color}`}>
+                  <item.icon className="h-10 w-10" />
                 </div>
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="font-bold text-lg text-brand-secondary">{project.title}</h3>
-                    <span className="bg-brand-accent/10 text-brand-accent text-xs font-bold px-3 py-1 rounded-full">
-                      {project.category}
-                    </span>
-                  </div>
-                  <p className="text-brand-accent font-bold text-sm mb-4">{project.roi}</p>
-                  <p className="text-gray-500 text-sm">{project.description}</p>
-                </div>
+                <h3 className="text-2xl font-black text-brand-secondary mb-4 tracking-tight">{item.title}</h3>
+                <p className="text-gray-500 leading-relaxed font-medium">{item.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -253,32 +197,63 @@ export default function Home() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-24 bg-white relative overflow-hidden">
-         <div className="absolute top-0 right-0 w-64 h-64 bg-brand-primary/5 rounded-full -mr-32 -mt-32" />
-         <div className="absolute bottom-0 left-0 w-96 h-96 bg-brand-secondary/5 rounded-full -ml-48 -mb-48" />
-         
-         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-           <h2 className="text-3xl font-bold text-brand-secondary mb-12">Ce que disent nos clients</h2>
-           <div className="space-y-12">
-             {TESTIMONIALS.map((t, idx) => (
-               <motion.div 
+      <section className="py-24 bg-brand-neutral/30 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-brand-primary/5 rounded-full blur-3xl -mr-48 -mt-48" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-brand-secondary/5 rounded-full blur-3xl -ml-48 -mb-48" />
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-20">
+            <motion.p 
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="text-brand-primary font-bold uppercase tracking-[0.3em] text-sm mb-4"
+            >
+              Témoignages
+            </motion.p>
+            <motion.h2 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-4xl md:text-5xl font-black text-brand-secondary tracking-tighter"
+            >
+              Ils nous font confiance<span className="text-brand-primary">.</span>
+            </motion.h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {TESTIMONIALS.map((t, idx) => (
+              <motion.div 
                 key={t.id}
-                {...fadeIn}
-                className="relative"
-               >
-                 <div className="flex justify-center mb-6">
-                   {[...Array(t.rating)].map((_, i) => (
-                     <Star key={i} className="h-5 w-5 text-brand-primary fill-brand-primary" />
-                   ))}
-                 </div>
-                 <blockquote className="text-2xl font-medium text-brand-secondary italic mb-6">
-                   "{t.text}"
-                 </blockquote>
-                 <cite className="not-italic font-bold text-gray-500">— {t.name}</cite>
-               </motion.div>
-             ))}
-           </div>
-         </div>
+                initial={{ opacity: 0, x: idx % 2 === 0 ? -20 : 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
+                className="bg-white p-10 rounded-[2.5rem] shadow-xl shadow-brand-secondary/5 border border-gray-100 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex gap-1 mb-6">
+                    {[...Array(t.rating)].map((_, i) => (
+                      <Star key={i} className="h-5 w-5 text-brand-primary fill-brand-primary" />
+                    ))}
+                  </div>
+                  <blockquote className="text-xl font-medium text-brand-secondary italic mb-10 leading-relaxed">
+                    "{t.text}"
+                  </blockquote>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-brand-neutral rounded-full flex items-center justify-center font-black text-brand-secondary text-xl">
+                    {t.name.charAt(0)}
+                  </div>
+                  <div>
+                    <cite className="not-italic font-black text-brand-secondary text-lg">{t.name}</cite>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5">Client SOL!</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* Final CTA */}

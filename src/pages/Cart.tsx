@@ -1,11 +1,15 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../context/CartContext';
-import { ShoppingCart, Trash2, ArrowRight, Sun, MessageSquare, ShoppingBag } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { ShoppingCart, Trash2, ArrowRight, Sun, MessageSquare, ShoppingBag, Lock } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 export default function Cart() {
   const { cart, removeFromCart, clearCart } = useCart();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <div className="pt-32 pb-24 min-h-screen bg-brand-neutral">
@@ -116,22 +120,34 @@ export default function Cart() {
                   Votre sélection est prête. Vous pouvez soit demander un devis complet pour vos services, soit commander les produits directement sur WhatsApp.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Link 
-                    to="/contact"
-                    className="bg-brand-primary text-brand-secondary px-10 py-5 rounded-2xl font-bold flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-xl shadow-brand-primary/20"
-                  >
-                    <MessageSquare className="h-5 w-5" /> Devis complet
-                  </Link>
-                  <a 
-                    href={`https://wa.me/23675000000?text=${encodeURIComponent(
-                      `Bonjour SOL! Centrafrique, je souhaite commander : \n${cart.map(i => `- ${i.title}${i.price ? ` (${i.price} FCFA)` : ''}`).join('\n')}`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-green-500 text-white px-10 py-5 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-green-600 transition-all shadow-xl shadow-green-500/20"
-                  >
-                    <ShoppingBag className="h-5 w-5" /> Commander via WhatsApp
-                  </a>
+                  {isAuthenticated ? (
+                    <Link 
+                      to="/contact"
+                      className="bg-brand-primary text-brand-secondary px-10 py-5 rounded-2xl font-bold flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-xl shadow-brand-primary/20"
+                    >
+                      <MessageSquare className="h-5 w-5" /> Devis complet
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={() => navigate('/login', { state: { from: location } })}
+                      className="bg-brand-primary text-brand-secondary px-10 py-5 rounded-2xl font-bold flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-xl shadow-brand-primary/20"
+                    >
+                      <Lock className="h-5 w-5" /> Se connecter pour commander
+                    </button>
+                  )}
+                  
+                  {isAuthenticated && (
+                    <a 
+                      href={`https://wa.me/23675000000?text=${encodeURIComponent(
+                        `Bonjour SOL! Centrafrique, je souhaite commander : \n${cart.map(i => `- ${i.title}${i.price ? ` (${i.price} FCFA)` : ''}`).join('\n')}`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-green-500 text-white px-10 py-5 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-green-600 transition-all shadow-xl shadow-green-500/20"
+                    >
+                      <ShoppingBag className="h-5 w-5" /> Commander via WhatsApp
+                    </a>
+                  )}
                 </div>
               </div>
             </motion.div>

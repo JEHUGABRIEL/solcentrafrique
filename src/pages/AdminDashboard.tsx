@@ -6,10 +6,12 @@ import {
 } from 'recharts';
 import { 
   BarChart3, Users, Zap, ClipboardList, TrendingUp, DollarSign, 
-  Download, RefreshCcw, AlertCircle, LogOut, Loader2, Search 
+  Download, RefreshCcw, AlertCircle, LogOut, Loader2, Search, Bell, X, Mail
 } from 'lucide-react';
 import { fetchDashboardData, exportToCSV, DashboardData } from '../services/adminService';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const COLORS = ['#FFD700', '#1A2E35', '#FF4D00'];
 
@@ -20,12 +22,21 @@ export default function AdminDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [activePieIndex, setActivePieIndex] = useState(-1);
   const [searchQuery, setSearchQuery] = useState('');
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
   const navigate = useNavigate();
+  const { isAdmin, logout } = useAuth();
+  const { showToast } = useToast();
 
   const filteredProjects = data?.recentProjects.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     p.client.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
+
+  const loadLeads = () => {
+    const leads = JSON.parse(localStorage.getItem('admin_leads') || '[]');
+    setNotifications(leads);
+  };
 
   const loadData = async (refresh = false) => {
     if (refresh) setIsRefreshing(true);
@@ -35,6 +46,7 @@ export default function AdminDashboard() {
     try {
       const response = await fetchDashboardData();
       setData(response);
+      loadLeads();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue");
     } finally {
@@ -44,17 +56,33 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    const isAuth = localStorage.getItem('admin_token');
-    if (!isAuth) {
-      navigate('/admin/login');
+    if (!isAdmin) {
+      navigate('/login', { state: { from: { pathname: '/admin' } } });
       return;
     }
     loadData();
-  }, [navigate]);
+
+    const handleNewLead = (e: any) => {
+      const lead = e.detail;
+      setNotifications(prev => [lead, ...prev]);
+      showToast("Nouvelle demande de devis !", "success");
+      // Simulate haptic if possible
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+    };
+
+    window.addEventListener('new-lead', handleNewLead);
+    return () => window.removeEventListener('new-lead', handleNewLead);
+  }, [isAdmin, navigate]);
+
+  const clearNotifications = () => {
+    localStorage.setItem('admin_leads', '[]');
+    setNotifications([]);
+    setShowNotifications(false);
+  };
 
   const handleLogout = () => {
-    localStorage.removeItem('admin_token');
-    navigate('/admin/login');
+    logout();
+    navigate('/login');
   };
 
   const onPieEnter = (_: any, index: number) => {
@@ -175,7 +203,63 @@ export default function AdminDashboard() {
             <p className="text-gray-500 mt-1">Données consolidées de SOL! République Centrafricaine</p>
           </div>
 
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-4 items-center">
+            <div className="relative">
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="bg-white border border-gray-200 p-3 rounded-xl text-brand-secondary hover:border-brand-primary transition-all relative group"
+              >
+                <Bell className={`h-5 w-5 ${notifications.some(n => n.isNew) ? 'animate-bounce text-brand-primary' : ''}`} />
+                {notifications.filter(n => n.isNew).length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-brand-primary text-brand-secondary text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white">
+                    {notifications.filter(n => n.isNew).length}
+                  </span>
+                )}
+              </button>
+
+              <AnimatePresence>
+                {showNotifications && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute right-0 mt-3 w-80 bg-white rounded-3xl shadow-2xl border border-gray-100 z-[100] overflow-hidden"
+                  >
+                    <div className="p-6 bg-brand-neutral/50 border-b border-gray-100 flex justify-between items-center">
+                      <h4 className="font-black text-brand-secondary uppercase tracking-widest text-xs">Derniers Leads</h4>
+                      <button 
+                        onClick={clearNotifications}
+                        className="text-[10px] font-bold text-gray-400 hover:text-red-500 uppercase tracking-widest"
+                      >
+                        Tout effacer
+                      </button>
+                    </div>
+                    <div className="max-h-[400px] overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="p-12 text-center">
+                          <Mail className="h-8 w-8 text-gray-200 mx-auto mb-4" />
+                          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Aucune notification</p>
+                        </div>
+                      ) : (
+                        notifications.map((n, i) => (
+                          <div key={n.id} className={`p-4 border-b border-gray-50 hover:bg-brand-neutral/20 transition-colors ${n.isNew ? 'bg-brand-primary/5' : ''}`}>
+                            <div className="flex justify-between items-start mb-1">
+                              <p className="font-bold text-brand-secondary text-sm">{n.name}</p>
+                              <span className="text-[8px] font-black uppercase text-gray-400">{new Date(n.date).toLocaleDateString()}</span>
+                            </div>
+                            <p className="text-[10px] text-gray-500 mb-2 truncate">{n.message}</p>
+                            <span className="bg-brand-primary/10 text-brand-primary text-[8px] font-black px-2 py-0.5 rounded-full uppercase">
+                              {n.type === 'residential' ? 'Maison' : 'Pro'}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             <button 
               onClick={() => loadData(true)}
               disabled={isRefreshing}

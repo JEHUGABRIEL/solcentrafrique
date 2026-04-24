@@ -26,25 +26,28 @@ export default function Contact() {
     
     if (name === 'name') {
       if (!value.trim()) error = 'Le nom est requis';
-      else if (value.length < 3) error = 'Le nom doit contenir au moins 3 caractères';
+      else if (value.trim().length < 3) error = 'Le nom doit contenir au moins 3 caractères';
+      else if (!/^[a-zA-ZÀ-ÿ\s'-]+$/.test(value)) error = 'Le nom contient des caractères invalides';
     }
     
     if (name === 'email') {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!value) error = 'L\'email est requis';
-      else if (!emailRegex.test(value)) error = 'Email invalide';
+      else if (!emailRegex.test(value)) error = 'Format d\'email invalide (ex: nom@domaine.com)';
     }
 
     if (name === 'phone') {
       const phoneRegex = /^\+?[0-9\s-]{8,15}$/;
-      if (value && !phoneRegex.test(value)) error = 'Numéro de téléphone invalide';
+      if (value && !phoneRegex.test(value)) error = 'Format de téléphone invalide';
     }
 
     if (name === 'message') {
       if (!value.trim()) error = 'Le message ne peut pas être vide';
+      else if (value.trim().length < 10) error = 'Votre message est trop court (min 10 caractères)';
     }
 
     setErrors(prev => ({ ...prev, [name]: error }));
+    return error;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -70,6 +73,20 @@ export default function Contact() {
     setIsSubmitting(true);
     // Simulate submission
     setTimeout(() => {
+      // Simulate adding a lead to localStorage for Admin Dashboard notification
+      const newLead = {
+        id: Math.random().toString(36).substr(2, 9),
+        ...formData,
+        date: new Date().toISOString(),
+        isNew: true
+      };
+      
+      const existingLeads = JSON.parse(localStorage.getItem('admin_leads') || '[]');
+      localStorage.setItem('admin_leads', JSON.stringify([newLead, ...existingLeads]));
+      
+      // Dispatch a custom event for real-time notification if admin is in another tab/component
+      window.dispatchEvent(new CustomEvent('new-lead', { detail: newLead }));
+
       setIsSubmitting(false);
       setIsSubmitted(true);
       setFormData({ name: '', email: '', phone: '', type: 'residential', message: '' });

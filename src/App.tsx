@@ -14,9 +14,12 @@ import Blog from './pages/Blog';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminLogin from './pages/AdminLogin';
 import Chatbot from './components/Chatbot';
-
+import ScrollToTop from './components/ScrollToTop';
 import { HelmetProvider } from 'react-helmet-async';
 import { CartProvider } from './context/CartContext';
+import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
+import Login from './pages/Login';
 
 const pageVariants = {
   initial: { opacity: 0, y: 10 },
@@ -29,9 +32,12 @@ export default function App() {
 
   return (
     <HelmetProvider>
+      <AuthProvider>
+      <ToastProvider>
       <CartProvider>
         <div className="min-h-screen bg-brand-neutral font-sans selection:bg-brand-primary selection:text-brand-secondary">
           <Navbar />
+          <ScrollToTop />
           
           <main className="relative">
           <AnimatePresence mode="wait">
@@ -79,6 +85,11 @@ export default function App() {
             <Route path="/admin" element={
               <motion.div initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={{ duration: 0.3 }}>
                 <AdminDashboard />
+              </motion.div>
+            } />
+            <Route path="/login" element={
+              <motion.div initial="initial" animate="animate" exit="exit" variants={pageVariants} transition={{ duration: 0.3 }}>
+                <Login />
               </motion.div>
             } />
             <Route path="/admin/login" element={
@@ -141,6 +152,8 @@ export default function App() {
       </footer>
     </div>
     </CartProvider>
+    </ToastProvider>
+    </AuthProvider>
     </HelmetProvider>
   );
 }

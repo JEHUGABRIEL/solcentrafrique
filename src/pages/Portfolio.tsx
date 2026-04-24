@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PROJECTS } from '../constants';
-import { X, TrendingUp, Info, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
+import { X, TrendingUp, Info, ChevronLeft, ChevronRight, Maximize2, Lock } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const categories = [
   { id: 'all', name: 'Tous les projets' },
@@ -9,16 +11,35 @@ const categories = [
   { id: 'commercial', name: 'Commercial' },
   { id: 'institutional', name: 'Institutionnel' },
 ];
-
 export default function Portfolio() {
   const [filter, setFilter] = useState('all');
   const [selectedProject, setSelectedProject] = useState<typeof PROJECTS[0] | null>(null);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [autoplay, setAutoplay] = useState(true);
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  React.useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (selectedProject && selectedProject.images && selectedProject.images.length > 1 && autoplay && !isZoomed) {
+      interval = setInterval(() => {
+        setActiveImageIndex((prev) => (prev + 1) % selectedProject.images!.length);
+      }, 5000);
+    }
+    return () => clearInterval(interval);
+  }, [selectedProject, selectedProject?.images, autoplay, isZoomed]);
 
   const filteredProjects = filter === 'all' 
     ? PROJECTS 
     : PROJECTS.filter(p => p.category === filter);
 
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const handleProjectSelect = (project: typeof PROJECTS[0]) => {
+    setSelectedProject(project);
+    setActiveImageIndex(0);
+    setIsZoomed(false);
+  };
 
   return (
     <div className="pt-32 pb-24 min-h-screen">
@@ -36,7 +57,9 @@ export default function Portfolio() {
           {categories.map((cat) => (
             <button
               key={cat.id}
-              onClick={() => setFilter(cat.id)}
+              onClick={() => {
+                setFilter(cat.id);
+              }}
               aria-pressed={filter === cat.id}
               className={`px-8 py-3 rounded-full font-bold text-sm transition-all focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary ${
                 filter === cat.id 
@@ -67,17 +90,18 @@ export default function Portfolio() {
                   delay: idx * 0.05,
                   layout: { duration: 0.3 }
                 }}
-                onClick={() => setSelectedProject(project)}
-                className="group cursor-pointer relative bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100"
+                onClick={() => handleProjectSelect(project)}
+                className="group cursor-pointer relative bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 focus-within:ring-4 focus-within:ring-brand-primary/20 outline-none"
                 role="button"
                 aria-label={`Voir les détails du projet: ${project.title}`}
                 tabIndex={0}
-                onKeyDown={(e) => e.key === 'Enter' && setSelectedProject(project)}
+                onKeyDown={(e) => e.key === 'Enter' && handleProjectSelect(project)}
               >
                 <div className="aspect-[4/3] overflow-hidden">
                   <img 
                     src={project.image} 
                     alt={`Installation solaire: ${project.title}`} 
+                    loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />
                   <div className="absolute inset-0 bg-brand-secondary/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -118,120 +142,188 @@ export default function Portfolio() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedProject(null)}
-              className="fixed inset-0 bg-brand-secondary/80 backdrop-blur-sm z-[60]"
+              className="fixed inset-0 bg-brand-secondary/90 backdrop-blur-md z-[60]"
               aria-hidden="true"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.9, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="fixed inset-4 md:inset-x-auto md:top-24 md:bottom-24 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-4xl bg-white rounded-[2.5rem] shadow-2xl z-[70] overflow-hidden flex flex-col md:flex-row"
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="fixed inset-4 md:inset-x-auto md:top-[10vh] md:bottom-[10vh] md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-5xl bg-white rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.3)] z-[70] overflow-hidden flex flex-col lg:flex-row"
               role="dialog"
               aria-modal="true"
               aria-labelledby="modal-title"
             >
               <button
                 onClick={() => setSelectedProject(null)}
-                className="absolute top-6 right-6 p-2 bg-white/20 hover:bg-white/40 text-white md:text-brand-secondary md:bg-brand-neutral md:hover:bg-gray-200 rounded-full transition-colors z-[80]"
+                className="absolute top-6 right-6 p-3 bg-white/20 hover:bg-brand-primary text-white hover:text-brand-secondary rounded-2xl transition-all z-[80] shadow-xl backdrop-blur-md"
                 aria-label="Fermer le modal"
               >
                 <X className="h-6 w-6" />
               </button>
 
-              <div className="flex-1 h-1/2 md:h-auto overflow-hidden relative group">
+              {/* Gallery Section */}
+              <div className="flex-1 h-2/5 lg:h-auto overflow-hidden relative group bg-brand-neutral">
                 <AnimatePresence mode="wait">
-                  <motion.img 
+                  <motion.div
                     key={activeImageIndex}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    src={selectedProject.images ? selectedProject.images[activeImageIndex] : selectedProject.image} 
-                    alt={`${selectedProject.title} view ${activeImageIndex + 1}`}
-                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-110 cursor-zoom-in"
-                  />
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="w-full h-full relative cursor-zoom-in overflow-hidden"
+                    onClick={() => setIsZoomed(!isZoomed)}
+                  >
+                    <motion.img 
+                      animate={{ scale: isZoomed ? 1.5 : 1 }}
+                      transition={{ type: 'spring', damping: 25 }}
+                      src={selectedProject.images ? selectedProject.images[activeImageIndex] : selectedProject.image} 
+                      alt={`${selectedProject.title} view ${activeImageIndex + 1}`}
+                      loading="lazy"
+                      className={`w-full h-full object-cover select-none ${isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
+                    />
+                    {isZoomed && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
+                        <span className="bg-white/90 px-4 py-2 rounded-full font-bold text-brand-secondary shadow-xl">
+                          Mode Zoom Activé
+                        </span>
+                      </div>
+                    )}
+                  </motion.div>
                 </AnimatePresence>
 
-                {selectedProject.images && selectedProject.images.length > 1 && (
+                {!isZoomed && (
                   <>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveImageIndex(prev => (prev - 1 + selectedProject.images!.length) % selectedProject.images!.length);
-                      }}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-md p-2 rounded-full text-white hover:bg-brand-primary hover:text-brand-secondary transition-all opacity-0 group-hover:opacity-100"
-                    >
-                      <ChevronLeft className="h-6 w-6" />
-                    </button>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveImageIndex(prev => (prev + 1) % selectedProject.images!.length);
-                      }}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-md p-2 rounded-full text-white hover:bg-brand-primary hover:text-brand-secondary transition-all opacity-0 group-hover:opacity-100"
-                    >
-                      <ChevronRight className="h-6 w-6" />
-                    </button>
-
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
-                      {selectedProject.images.map((_, i) => (
+                    {selectedProject.images && selectedProject.images.length > 1 && (
+                      <>
                         <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveImageIndex(prev => (prev - 1 + selectedProject.images!.length) % selectedProject.images!.length);
+                          }}
+                          className="absolute left-6 top-1/2 -translate-y-1/2 bg-white/60 backdrop-blur-xl p-5 rounded-3xl text-brand-secondary hover:bg-brand-primary hover:scale-110 active:scale-95 transition-all shadow-2xl z-[75] border border-white/20"
+                        >
+                          <ChevronLeft className="h-8 w-8" />
+                        </button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveImageIndex(prev => (prev + 1) % selectedProject.images!.length);
+                          }}
+                          className="absolute right-6 top-1/2 -translate-y-1/2 bg-white/60 backdrop-blur-xl p-5 rounded-3xl text-brand-secondary hover:bg-brand-primary hover:scale-110 active:scale-95 transition-all shadow-2xl z-[75] border border-white/20"
+                        >
+                          <ChevronRight className="h-8 w-8" />
+                        </button>
+                      </>
+                    )}
+
+                    {/* Thumbnail strips */}
+                    <div className="absolute bottom-8 left-8 right-8 flex justify-center gap-4">
+                      {selectedProject.images?.map((img, i) => (
+                        <button
                           key={i}
-                          onClick={() => setActiveImageIndex(i)}
-                          className={`h-1.5 rounded-full transition-all ${i === activeImageIndex ? 'w-8 bg-brand-primary' : 'w-2 bg-white/50'}`}
-                        />
+                          onClick={(e) => { e.stopPropagation(); setActiveImageIndex(i); }}
+                          className={`w-20 h-20 rounded-2xl overflow-hidden border-4 transition-all duration-300 relative ${
+                            i === activeImageIndex 
+                              ? 'border-brand-primary scale-110 shadow-[0_0_20px_rgba(253,185,19,0.5)] z-10' 
+                              : 'border-white/20 opacity-50 hover:opacity-100 hover:border-white/40'
+                          }`}
+                        >
+                          <img src={img} alt="thumbnail" className="w-full h-full object-cover" loading="lazy" />
+                          {i === activeImageIndex && (
+                            <motion.div 
+                              layoutId="active-thumb"
+                              className="absolute inset-0 border-2 border-brand-primary rounded-xl pointer-events-none"
+                            />
+                          )}
+                        </button>
                       ))}
                     </div>
+
+                    <div className="absolute top-8 left-8 bg-brand-secondary/60 backdrop-blur-md text-white px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border border-white/10">
+                      <Maximize2 className="h-4 w-4" /> Cliquez pour Zoomer
+                    </div>
+                    
+                    {selectedProject.images && selectedProject.images.length > 1 && (
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setAutoplay(!autoplay); }}
+                        className="absolute top-8 right-24 bg-brand-secondary/60 backdrop-blur-md text-white px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border border-white/10 hover:bg-brand-primary hover:text-brand-secondary transition-all"
+                      >
+                        {autoplay ? 'Pause Diaporama' : 'Lecture Diaporama'}
+                      </button>
+                    )}
                   </>
                 )}
-                <div className="absolute top-6 left-6 bg-brand-secondary/50 backdrop-blur-sm text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
-                  <Maximize2 className="h-3 w-3" /> Zoom interactif
-                </div>
               </div>
 
-              <div className="flex-1 p-8 md:p-12 overflow-y-auto">
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="bg-brand-primary/10 text-brand-secondary px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+              {/* Details Section */}
+              <div className="flex-1 p-10 md:p-14 overflow-y-auto bg-white">
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="bg-brand-primary text-brand-secondary px-5 py-2 rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-brand-primary/20">
                     {categories.find(c => c.id === selectedProject.category)?.name}
                   </span>
                 </div>
-                <h2 id="modal-title" className="text-3xl md:text-4xl font-bold text-brand-secondary mb-6">
+                <h2 id="modal-title" className="text-4xl md:text-5xl font-black text-brand-secondary mb-8 leading-tight tracking-tight">
                   {selectedProject.title}
                 </h2>
                 
-                <div className="bg-brand-neutral p-6 rounded-2xl mb-8 flex items-center gap-4">
-                  <div className="bg-brand-primary p-3 rounded-xl">
-                    <TrendingUp className="h-6 w-6 text-brand-secondary" />
+                <div className="bg-brand-neutral p-8 rounded-[2rem] mb-10 flex items-center gap-6 border border-gray-100">
+                  <div className="bg-brand-primary p-4 rounded-2xl shadow-xl shadow-brand-primary/20">
+                    <TrendingUp className="h-8 w-8 text-brand-secondary" />
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 font-bold uppercase">Impact Énergétique</p>
-                    <p className="text-brand-secondary font-bold text-lg">{selectedProject.roi}</p>
+                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">Impact & Économies</p>
+                    <p className="text-brand-secondary font-black text-xl">{selectedProject.roi}</p>
                   </div>
                 </div>
 
-                <div className="prose prose-slate mb-8">
-                  <h3 className="text-brand-secondary font-bold text-xl mb-4">Description du projet</h3>
-                  <p className="text-gray-600 leading-relaxed">
+                <div className="prose prose-lg mb-10">
+                  <h3 className="text-brand-secondary font-black text-2xl mb-4 tracking-tight">À propos de ce projet</h3>
+                  <p className="text-gray-600 leading-relaxed font-medium">
                     {selectedProject.description} 
-                    Ce projet a été réalisé avec les plus hauts standards de qualité SOL!. Nous avons utilisé des panneaux de dernière génération pour garantir une production maximale même par temps couvert à Bangui.
+                  </p>
+                  <p className="text-gray-500 mt-4 italic">
+                    SOL! Centrafrique a déployé son expertise technique pour garantir une fiabilité maximale. Chaque composant a été testé pour résister aux conditions climatiques de Bangui et des provinces.
                   </p>
                 </div>
 
-                <div className="space-y-4">
-                  <h4 className="font-bold text-brand-secondary">Spécifications :</h4>
-                  <ul className="grid grid-cols-2 gap-4 text-sm text-gray-500">
-                    <li className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-brand-primary rounded-full" /> Panneaux Tier 1
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-brand-primary rounded-full" /> Onduleur Hybride
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-brand-primary rounded-full" /> Batteries Lithium
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-brand-primary rounded-full" /> Suivi Cloud
-                    </li>
-                  </ul>
+                <div className="space-y-6">
+                  <h4 className="font-black text-brand-secondary uppercase text-sm tracking-widest">Équipements Installés :</h4>
+                  <div className="grid grid-cols-2 gap-6">
+                    {[
+                      { label: 'Panneaux Tier 1', detail: 'Haute Efficacité' },
+                      { label: 'Onduleur Hybride', detail: 'Intelligent' },
+                      { label: 'Batteries Lithium', detail: 'Longue Durée' },
+                      { label: 'Cloud Monitoring', detail: 'Suivi 24/7' }
+                    ].map((spec, i) => (
+                      <div key={i} className="flex flex-col p-4 rounded-2xl bg-brand-neutral border border-gray-100">
+                        <span className="text-brand-secondary font-black text-sm">{spec.label}</span>
+                        <span className="text-[10px] text-gray-400 font-bold uppercase">{spec.detail}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-12 pt-10 border-t border-gray-100">
+                  <button 
+                    onClick={() => {
+                      if (!isAuthenticated) {
+                        navigate('/login', { state: { from: location } });
+                        return;
+                      }
+                      // In a real app, this would open a lead form
+                      alert('Votre demande a été envoyée ! Un expert SOL! vous contactera sous 24h.');
+                    }}
+                    className="w-full bg-brand-secondary text-white py-6 rounded-[2rem] font-black uppercase tracking-widest hover:bg-brand-primary hover:text-brand-secondary transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-3 group"
+                  >
+                    {!isAuthenticated && <Lock className="h-5 w-5" />}
+                    {isAuthenticated ? 'Demander une étude similaire' : 'Se connecter pour commander'}
+                  </button>
+                  {!isAuthenticated && (
+                    <p className="text-center text-xs text-gray-400 mt-4 font-bold">
+                      Identifiez-vous pour accéder à nos services professionnels.
+                    </p>
+                  )}
                 </div>
               </div>
             </motion.div>

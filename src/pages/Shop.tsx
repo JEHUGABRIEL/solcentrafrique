@@ -1,15 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PRODUCTS } from '../constants';
 import { useCart } from '../context/CartContext';
-import { ShoppingCart, Check, Filter, Search, ShoppingBag, MessageSquare } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { ShoppingCart, Check, Filter, Search, ShoppingBag, MessageSquare, Heart, HeartOff, Loader2, Lock } from 'lucide-react';
 
 const CATEGORIES = ['Tous', 'Panneaux', 'Stockage', 'Onduleurs', 'Kits'];
+
+const ProductSkeleton = () => (
+  <div className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-gray-100 flex flex-col animate-pulse">
+    <div className="aspect-square bg-gray-200" />
+    <div className="p-8 space-y-4">
+      <div className="h-6 bg-gray-200 rounded-full w-3/4" />
+      <div className="h-4 bg-gray-200 rounded-full w-full" />
+      <div className="h-4 bg-gray-200 rounded-full w-5/6" />
+      <div className="pt-6 flex justify-between">
+        <div className="space-y-2">
+          <div className="h-3 bg-gray-200 rounded-full w-12" />
+          <div className="h-6 bg-gray-200 rounded-full w-24" />
+        </div>
+        <div className="w-14 h-14 bg-gray-200 rounded-2xl" />
+      </div>
+    </div>
+  </div>
+);
 
 export default function Shop() {
   const [activeCategory, setActiveCategory] = useState('Tous');
   const [searchQuery, setSearchQuery] = useState('');
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { addToCart, cart } = useCart();
+  const { isAuthenticated } = useAuth();
+  const { showToast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const savedFavorites = localStorage.getItem('favorites');
+    if (savedFavorites) {
+      setFavorites(JSON.parse(savedFavorites));
+    }
+    // Simulate loading
+    const timer = setTimeout(() => setIsLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const toggleFavorite = (id: string) => {
+    const newFavorites = favorites.includes(id)
+      ? favorites.filter(favId => favId !== id)
+      : [...favorites, id];
+    setFavorites(newFavorites);
+    localStorage.setItem('favorites', JSON.stringify(newFavorites));
+  };
 
   const filteredProducts = PRODUCTS.filter(p => {
     const matchesCategory = activeCategory === 'Tous' || p.category === activeCategory;
@@ -72,27 +117,40 @@ export default function Shop() {
 
         {/* Products Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          <AnimatePresence mode="popLayout">
-            {filteredProducts.map((product, idx) => (
-              <motion.div
-                layout
-                key={product.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.5, delay: idx * 0.05 }}
-                className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all border border-gray-100 flex flex-col group"
-              >
-                <div className="aspect-square relative overflow-hidden bg-brand-neutral">
-                  <img 
-                    src={product.image} 
-                    alt={product.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
-                  />
-                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-bold uppercase text-brand-primary shadow-sm">
-                    {product.category}
+          {isLoading ? (
+            Array.from({ length: 8 }).map((_, i) => <ProductSkeleton key={i} />)
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {filteredProducts.map((product, idx) => (
+                <motion.div
+                  layout
+                  key={product.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.5, delay: idx * 0.05 }}
+                  className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all border border-gray-100 flex flex-col group relative"
+                >
+                  <div className="aspect-square relative overflow-hidden bg-brand-neutral">
+                    <img 
+                      src={product.image} 
+                      alt={product.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                    />
+                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-bold uppercase text-brand-primary shadow-sm z-10">
+                      {product.category}
+                    </div>
+                    <button
+                      onClick={() => toggleFavorite(product.id)}
+                      className={`absolute top-4 right-4 p-3 rounded-xl backdrop-blur-md transition-all z-10 ${
+                        favorites.includes(product.id)
+                          ? 'bg-brand-primary text-brand-secondary scale-110 shadow-lg'
+                          : 'bg-white/50 text-brand-secondary hover:bg-brand-primary hover:text-brand-secondary'
+                      }`}
+                    >
+                      <Heart className={`h-5 w-5 ${favorites.includes(product.id) ? 'fill-current' : ''}`} />
+                    </button>
                   </div>
-                </div>
 
                 <div className="p-8 flex flex-col flex-1">
                   <h3 className="text-xl font-bold text-brand-secondary mb-2 group-hover:text-brand-primary transition-colors">
@@ -109,28 +167,49 @@ export default function Shop() {
                     </div>
                     
                     <button
-                      onClick={() => addToCart({ 
-                        id: product.id, 
-                        title: product.title, 
-                        price: product.price, 
-                        image: product.image,
-                        type: 'product' 
-                      })}
+                      onClick={() => {
+                        if (!isAuthenticated) {
+                          navigate('/login', { state: { from: location } });
+                          return;
+                        }
+                        addToCart({ 
+                          id: product.id, 
+                          title: product.title, 
+                          price: product.price, 
+                          image: product.image,
+                          type: 'product' 
+                        });
+                        showToast(`${product.title} ajouté au panier !`, 'success');
+                      }}
                       disabled={isInCart(product.id)}
-                      className={`p-4 rounded-2xl transition-all ${
+                      className={`p-4 rounded-2xl transition-all relative group ${
                         isInCart(product.id)
                           ? 'bg-green-500 text-white shadow-lg shadow-green-500/20'
                           : 'bg-brand-neutral text-brand-secondary hover:bg-brand-primary shadow-sm hover:shadow-brand-primary/20'
                       }`}
                     >
-                      {isInCart(product.id) ? <Check className="h-6 w-6" /> : <ShoppingCart className="h-6 w-6" />}
+                      {!isAuthenticated ? (
+                        <div className="flex items-center gap-2">
+                           <Lock className="h-5 w-5 opacity-50" />
+                           <ShoppingCart className="h-6 w-6" />
+                        </div>
+                      ) : (
+                        isInCart(product.id) ? <Check className="h-6 w-6" /> : <ShoppingCart className="h-6 w-6" />
+                      )}
+                      
+                      {!isAuthenticated && (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-brand-secondary text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                          Connectez-vous pour commander
+                        </div>
+                      )}
                     </button>
                   </div>
                 </div>
               </motion.div>
             ))}
           </AnimatePresence>
-        </div>
+        )}
+      </div>
 
         {filteredProducts.length === 0 && (
           <motion.div 

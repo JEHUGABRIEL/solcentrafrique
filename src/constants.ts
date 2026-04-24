@@ -36,40 +36,43 @@ export const PROJECTS: Project[] = [
     id: '1',
     title: 'Villa Moderne - Bangui',
     category: 'residential',
-    image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=60&w=800',
+    image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=80&w=1200',
     images: [
-      'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=60&w=800',
-      'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&q=60&w=800',
-      'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&q=60&w=800'
+      'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1509391366360-fe5bb58583bb?auto=format&fit=crop&q=80&w=1200'
     ],
     roi: 'Économies: 600.000 FCFA/an',
-    description: 'Autonomie complète pour une famille de 6 personnes.',
+    description: 'Autonomie complète pour une famille de 6 personnes avec un système hybride gérant les coupures nocturnes.',
   },
   {
     id: '2',
     title: 'Hôtel Solaire - Boali',
     category: 'commercial',
-    image: 'https://images.unsplash.com/photo-1466611653911-95282ee36567?auto=format&fit=crop&q=60&w=800',
+    image: 'https://images.unsplash.com/photo-1466611653911-95282ee36567?auto=format&fit=crop&q=80&w=1200',
     images: [
-      'https://images.unsplash.com/photo-1466611653911-95282ee36567?auto=format&fit=crop&q=60&w=800',
-      'https://images.unsplash.com/photo-1558449028-b53a39d100fc?auto=format&fit=crop&q=60&w=800',
-      'https://images.unsplash.com/photo-1509391366360-fe5bb58583bb?auto=format&fit=crop&q=60&w=800'
+      'https://images.unsplash.com/photo-1466611653911-95282ee36567?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1558449028-b53a39d100fc?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1509391366360-fe5bb58583bb?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1548332903-ae366838b4d8?auto=format&fit=crop&q=80&w=1200'
     ],
     roi: 'Économies: 2.500.000 FCFA/an',
-    description: 'Système hybride pour climatisation et éclairage extérieur.',
+    description: 'Un système hybride industriel permettant de maintenir la climatisation et l\'éclairage extérieur sans interruption.',
   },
   {
     id: '3',
     title: 'Centre de Santé - Bimbo',
     category: 'institutional',
-    image: 'https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?auto=format&fit=crop&q=60&w=800',
+    image: 'https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?auto=format&fit=crop&q=80&w=1200',
     images: [
-      'https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?auto=format&fit=crop&q=60&w=800',
-      'https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&q=60&w=800',
-      'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&q=60&w=800'
+      'https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=80&w=1200'
     ],
     roi: 'Impact: Énergie 24h/24',
-    description: 'Réfrigération des vaccins sécurisée par batterie lithium.',
+    description: 'Sécurisation de la chaîne du froid pour les vaccins et éclairage du bloc opératoire par batteries lithium.',
   },
 ];
 
