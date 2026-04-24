@@ -171,13 +171,11 @@ export default function Navbar() {
                 {navLinks.map((link, idx) => (
                   <motion.div
                     key={link.path}
-                    initial={{ opacity: 0, x: 50 }}
-                    animate={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
                     transition={{ 
-                      type: 'spring', 
-                      damping: 30, 
-                      stiffness: 300,
-                      delay: idx * 0.05 
+                      duration: 0.3,
+                      delay: idx * 0.08 
                     }}
                   >
                     <Link

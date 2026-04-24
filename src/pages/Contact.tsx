@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Phone, MapPin, Clock, Send, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Send, AlertCircle, CheckCircle2, Loader2, Facebook, Instagram, Linkedin } from 'lucide-react';
 
 interface FormErrors {
   name?: string;
@@ -157,10 +157,21 @@ export default function Contact() {
             <div className="mt-20 border-t border-white/10 pt-10">
               <p className="text-sm text-gray-400 mb-4 font-bold uppercase tracking-widest">Suivez-nous</p>
               <div className="flex gap-4">
-                {['FB', 'WA', 'LI'].map(social => (
-                  <div key={social} className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center hover:bg-brand-primary hover:text-brand-secondary transition-all cursor-pointer font-black text-xs">
-                    {social}
-                  </div>
+                {[
+                  { icon: Facebook, href: 'https://facebook.com/solcentrafrique' },
+                  { icon: Instagram, href: 'https://instagram.com/solcentrafrique' },
+                  { icon: Linkedin, href: 'https://linkedin.com/company/solcentrafrique' },
+                ].map((social, i) => (
+                  <a 
+                    key={i} 
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => { if (navigator.vibrate) navigator.vibrate(5); }}
+                    className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center hover:bg-brand-primary hover:text-brand-secondary transition-all cursor-pointer group/social"
+                  >
+                    <social.icon className="h-5 w-5 group-hover/social:scale-110 transition-transform" />
+                  </a>
                 ))}
               </div>
             </div>

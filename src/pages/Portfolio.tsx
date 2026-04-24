@@ -27,7 +27,11 @@ function OptimizedImage({ src, alt, className, thumbnail }: { src: string; alt: 
         alt={alt}
         loading="lazy"
         onLoad={() => setIsLoaded(true)}
-        className={`w-full h-full object-cover transition-all duration-700 ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-110'}`}
+        className={`w-full h-full object-cover transition-all duration-700 ${
+          isLoaded 
+            ? 'opacity-100 scale-100 group-hover:scale-110' 
+            : 'opacity-0 scale-110'
+        }`}
       />
     </div>
   );
@@ -143,7 +147,7 @@ export default function Portfolio() {
                   layout: { duration: 0.3 }
                 }}
                 onClick={() => handleProjectSelect(project)}
-                className="group cursor-pointer relative bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 focus-within:ring-4 focus-within:ring-brand-primary/20 outline-none"
+                className="group cursor-pointer relative bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 border border-gray-100 focus-within:ring-4 focus-within:ring-brand-primary/20 outline-none"
                 role="button"
                 aria-label={`Voir les détails du projet: ${project.title}`}
                 tabIndex={0}
@@ -153,7 +157,7 @@ export default function Portfolio() {
                   <OptimizedImage 
                     src={project.image} 
                     alt={`Installation solaire: ${project.title}`} 
-                    className="w-full h-full group-hover:scale-110 transition-transform duration-700"
+                    className="w-full h-full"
                   />
                   <div className="absolute inset-0 bg-brand-secondary/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <span className="bg-white text-brand-secondary px-6 py-2 rounded-full font-bold text-sm flex items-center gap-2">
