@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Phone, ShoppingCart, User, ArrowRight, LogOut, LayoutDashboard } from 'lucide-react';
+import { Menu, X, Phone, ShoppingCart, User, ArrowRight, LogOut, LayoutDashboard, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -8,10 +8,21 @@ import { useAuth } from '../context/AuthContext';
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const { itemCount } = useCart();
+  const { itemCount, isCartAnimating } = useCart();
   const { user, isAuthenticated, logout, isAdmin } = useAuth();
 
   const isAdminPage = location.pathname.startsWith('/admin');
+
+  React.useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isOpen]);
 
   const navLinks = isAdminPage ? [] : [
     { name: 'Accueil', path: '/' },
@@ -63,11 +74,21 @@ export default function Navbar() {
             {!isAdminPage && (
               <div className="relative group">
                 <Link to="/cart" className="p-2 text-brand-secondary hover:text-brand-primary transition-colors">
-                  <ShoppingCart className="h-6 w-6" />
+                  <motion.div
+                    animate={isCartAnimating ? { scale: [1, 1.3, 1], rotate: [0, -10, 10, 0] } : {}}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <ShoppingCart className={`h-6 w-6 ${isCartAnimating ? 'text-brand-primary' : ''}`} />
+                  </motion.div>
                   {itemCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-brand-primary text-brand-secondary text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                    <motion.span 
+                      key={itemCount}
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="absolute -top-1 -right-1 bg-brand-primary text-brand-secondary text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center"
+                    >
                       {itemCount}
-                    </span>
+                    </motion.span>
                   )}
                 </Link>
               </div>
@@ -135,14 +156,14 @@ export default function Navbar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
-              className="fixed inset-0 bg-brand-secondary/80 backdrop-blur-md z-[55] md:hidden"
+              className="fixed inset-0 bg-brand-secondary/60 z-[55] md:hidden backdrop-brightness-50 backdrop-blur-sm"
             />
             <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 h-screen w-[85%] max-w-sm bg-white shadow-2xl z-[60] md:hidden flex flex-col"
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed top-0 right-0 h-screen w-[85%] max-w-sm bg-white shadow-[-20px_0_60px_rgba(0,0,0,0.3)] z-[60] md:hidden flex flex-col"
             >
               <div className="p-6 flex justify-between items-center border-b border-gray-100 bg-brand-neutral/30">
                  <Link to="/" onClick={() => setIsOpen(false)} className="flex items-center space-x-2">
@@ -166,16 +187,17 @@ export default function Navbar() {
                 </button>
               </div>
 
-              <div className="p-6 space-y-2 flex-grow overflow-y-auto bg-white">
-                <p className="px-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Navigation</p>
+              <div className="p-8 space-y-3 flex-grow overflow-y-auto bg-white">
+                <p className="px-4 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6">Navigation principale</p>
                 {navLinks.map((link, idx) => (
                   <motion.div
                     key={link.path}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
                     transition={{ 
-                      duration: 0.3,
-                      delay: idx * 0.08 
+                      duration: 0.5,
+                      delay: 0.1 + (idx * 0.05),
+                      ease: [0.16, 1, 0.3, 1]
                     }}
                   >
                     <Link
@@ -184,24 +206,28 @@ export default function Navbar() {
                         if (navigator.vibrate) navigator.vibrate(10);
                         setIsOpen(false);
                       }}
-                      className={`group flex items-center justify-between px-5 py-4 rounded-2xl transition-all active:scale-95 ${
+                      className={`group flex items-center justify-between px-6 py-5 rounded-[2rem] transition-all active:scale-95 border-2 ${
                         location.pathname === link.path 
-                          ? 'bg-brand-primary text-brand-secondary font-black shadow-lg shadow-brand-primary/20' 
-                          : 'text-gray-600 font-bold hover:bg-brand-neutral hover:text-brand-secondary'
+                          ? 'bg-brand-primary border-brand-primary text-brand-secondary font-black shadow-2xl shadow-brand-primary/20' 
+                          : 'text-gray-600 font-bold border-transparent hover:bg-brand-neutral hover:text-brand-secondary'
                       }`}
                     >
-                      <span className="text-lg">{link.name}</span>
+                      <span className="text-xl tracking-tight">{link.name}</span>
                       {location.pathname === link.path ? (
-                        <div className="w-2 h-2 bg-brand-secondary rounded-full" />
+                        <div className="w-2.5 h-2.5 bg-brand-secondary rounded-full shadow-[0_0_8px_rgba(26,46,53,0.3)]" />
                       ) : (
-                        <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-all text-brand-primary" />
+                        <motion.div
+                          whileHover={{ x: 5 }}
+                        >
+                          <ChevronRight className="h-5 w-5 text-brand-primary opacity-0 group-hover:opacity-100 transition-all" />
+                        </motion.div>
                       )}
                     </Link>
                   </motion.div>
                 ))}
               </div>
 
-              <div className="p-6 space-y-4 bg-brand-neutral/50 border-t border-gray-100">
+              <div className="p-8 space-y-6 bg-brand-neutral/40 border-t border-gray-100 backdrop-blur-sm">
                 <div className={`grid ${isAdminPage ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
                   {!isAdminPage && (
                     <motion.div
@@ -218,11 +244,20 @@ export default function Navbar() {
                         className="flex flex-col h-full items-center justify-center p-5 rounded-[2rem] bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all relative group"
                       >
                         <div className="relative mb-1">
-                          <ShoppingCart className="h-7 w-7 text-brand-secondary group-hover:text-brand-primary transition-colors" />
+                          <motion.div
+                            animate={isCartAnimating ? { scale: [1, 1.2, 1], rotate: [0, 5, -5, 0] } : {}}
+                          >
+                            <ShoppingCart className={`h-7 w-7 ${isCartAnimating ? 'text-brand-primary' : 'text-brand-secondary'} group-hover:text-brand-primary transition-colors`} />
+                          </motion.div>
                           {itemCount > 0 && (
-                            <span className="absolute -top-1 -right-2 bg-brand-primary text-brand-secondary text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-lg border border-white">
+                            <motion.span 
+                              key={itemCount}
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="absolute -top-1 -right-2 bg-brand-primary text-brand-secondary text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-lg border border-white"
+                            >
                               {itemCount}
-                            </span>
+                            </motion.span>
                           )}
                         </div>
                         <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Panier</span>

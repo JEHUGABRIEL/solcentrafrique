@@ -22,6 +22,11 @@ const posts = [
     date: "12 Avril 2026",
     author: "Ing. Moussa",
     image: "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=60&w=800",
+    images: [
+      "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=60&w=800",
+      "https://images.unsplash.com/photo-1509391366360-fe5bb58583bb?auto=format&fit=crop&q=60&w=800",
+      "https://images.unsplash.com/photo-1466611653911-95282ee36567?auto=format&fit=crop&q=60&w=800"
+    ],
     category: "Guides"
   },
   {
@@ -31,6 +36,10 @@ const posts = [
     date: "05 Avril 2026",
     author: "Direction SOL!",
     image: "https://images.unsplash.com/photo-1466611653911-95282ee36567?auto=format&fit=crop&q=60&w=800",
+    images: [
+      "https://images.unsplash.com/photo-1466611653911-95282ee36567?auto=format&fit=crop&q=60&w=800",
+      "https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?auto=format&fit=crop&q=60&w=800"
+    ],
     category: "Actualités"
   },
   {
@@ -40,6 +49,10 @@ const posts = [
     date: "28 Mars 2026",
     author: "Service Maintenance",
     image: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&q=60&w=800",
+    images: [
+      "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&q=60&w=800",
+      "https://images.unsplash.com/photo-1611365892117-00ac5ef437ea?auto=format&fit=crop&q=60&w=800"
+    ],
     category: "Entretien"
   }
 ];

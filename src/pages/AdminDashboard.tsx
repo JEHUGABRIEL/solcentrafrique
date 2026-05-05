@@ -90,8 +90,10 @@ export default function AdminDashboard() {
       setPosts(postsResponse);
       setComments(commentsResponse);
       loadLeads();
+      if (refresh) showToast("Données synchronisées", "success");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue");
+      showToast("Erreur lors du chargement des données", "error");
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -281,16 +283,19 @@ export default function AdminDashboard() {
       { Metric: "Satisfaction Client", Value: data.satisfaction }
     ];
     exportToCSV(exportData, 'sol_stats_summary');
+    showToast("Résumé exporté avec succès !", "success");
   };
 
   const handleExportHistory = () => {
     if (!data) return;
     exportToCSV(data.growth, 'sol_growth_history');
+    showToast("Historique de croissance exporté !", "success");
   };
 
   const handleExportLogins = () => {
     if (!data) return;
     exportToCSV(data.loginAttempts, 'sol_login_attempts');
+    showToast("Journal des connexions exporté !", "success");
   };
 
   if (isLoading) {
@@ -459,7 +464,7 @@ export default function AdminDashboard() {
               <Download className="h-4 w-4" /> Export Résumé
             </button>
             <button 
-              onClick={handleLogout}
+              onClick={logout}
               className="bg-red-50 text-red-600 px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-red-100 transition-all shadow-sm"
             >
               <LogOut className="h-4 w-4" /> Déconnexion
@@ -1117,7 +1122,7 @@ export default function AdminDashboard() {
                     <input 
                       type="text" required
                       value={projectForm.roi}
-                      onChange={(e) => setPostForm({...projectForm, roi: e.target.value})}
+                      onChange={(e) => setProjectForm({...projectForm, roi: e.target.value})}
                       placeholder="Ex: 500.000 FCFA/an"
                       className="w-full bg-brand-neutral border border-gray-100 px-6 py-4 rounded-2xl focus:border-brand-primary outline-none transition-all"
                     />

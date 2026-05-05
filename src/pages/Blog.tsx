@@ -12,6 +12,7 @@ interface Post {
   date: string;
   author: string;
   image: string;
+  images?: string[];
   category: string;
 }
 
@@ -33,6 +34,11 @@ const POSTS = [
     date: "12 Avril 2026",
     author: "Ing. Moussa",
     image: "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=60&w=800",
+    images: [
+      "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=60&w=800",
+      "https://images.unsplash.com/photo-1509391366360-fe5bb58583bb?auto=format&fit=crop&q=60&w=800",
+      "https://images.unsplash.com/photo-1466611653911-95282ee36567?auto=format&fit=crop&q=60&w=800"
+    ],
     category: "Guides"
   },
   {
@@ -42,6 +48,10 @@ const POSTS = [
     date: "05 Avril 2026",
     author: "Direction SOL!",
     image: "https://images.unsplash.com/photo-1466611653911-95282ee36567?auto=format&fit=crop&q=60&w=800",
+    images: [
+      "https://images.unsplash.com/photo-1466611653911-95282ee36567?auto=format&fit=crop&q=60&w=800",
+      "https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?auto=format&fit=crop&q=60&w=800"
+    ],
     category: "Actualités"
   },
   {
@@ -51,6 +61,10 @@ const POSTS = [
     date: "28 Mars 2026",
     author: "Service Maintenance",
     image: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&q=60&w=800",
+    images: [
+      "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?auto=format&fit=crop&q=60&w=800",
+      "https://images.unsplash.com/photo-1611365892117-00ac5ef437ea?auto=format&fit=crop&q=60&w=800"
+    ],
     category: "Entretien"
   },
   {
@@ -60,12 +74,128 @@ const POSTS = [
     date: "15 Mars 2026",
     author: "Logistique SOL!",
     image: "https://images.unsplash.com/photo-1509391366360-fe5bb58583bb?auto=format&fit=crop&q=60&w=800",
+    images: [
+      "https://images.unsplash.com/photo-1509391366360-fe5bb58583bb?auto=format&fit=crop&q=60&w=800",
+      "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=60&w=800"
+    ],
     category: "Projets"
   }
 ];
 
 const POSTS_PER_PAGE = 3;
 const CATEGORIES = ["Tous", "Guides", "Actualités", "Entretien", "Projets"];
+
+function BlogGallery({ images }: { images: string[] }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
+
+  const slideVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 1000 : -1000,
+      opacity: 0
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1
+    },
+    exit: (direction: number) => ({
+      zIndex: 0,
+      x: direction < 0 ? 1000 : -1000,
+      opacity: 0
+    })
+  };
+
+  const swipeConfidenceThreshold = 10000;
+  const swipePower = (offset: number, velocity: number) => {
+    return Math.abs(offset) * velocity;
+  };
+
+  const paginate = (newDirection: number) => {
+    setDirection(newDirection);
+    setCurrentIndex((prevIndex) => (prevIndex + newDirection + images.length) % images.length);
+  };
+
+  if (!images || images.length === 0) return null;
+
+  return (
+    <div className="mt-16 mb-16">
+      <div className="flex items-center gap-4 mb-8">
+        <div className="h-px bg-gray-200 flex-1"></div>
+        <h3 className="text-2xl font-black text-brand-secondary px-6 shrink-0 flex items-center gap-3">
+          <ImageIcon className="h-6 w-6 text-brand-primary" />
+          Galerie Photos
+        </h3>
+        <div className="h-px bg-gray-200 flex-1"></div>
+      </div>
+      
+      <div className="relative aspect-video rounded-[2.5rem] overflow-hidden bg-brand-neutral shadow-2xl group">
+        <AnimatePresence initial={false} custom={direction}>
+          <motion.img
+            key={currentIndex}
+            src={images[currentIndex]}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              x: { type: "spring", stiffness: 300, damping: 30 },
+              opacity: { duration: 0.2 }
+            }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={1}
+            onDragEnd={(e, { offset, velocity }) => {
+              const swipe = swipePower(offset.x, velocity.x);
+
+              if (swipe < -swipeConfidenceThreshold) {
+                paginate(1);
+              } else if (swipe > swipeConfidenceThreshold) {
+                paginate(-1);
+              }
+            }}
+            className="absolute inset-0 w-full h-full object-cover cursor-grab active:cursor-grabbing"
+          />
+        </AnimatePresence>
+
+        {images.length > 1 && (
+          <>
+            <div className="absolute inset-0 flex items-center justify-between p-4 pointer-events-none">
+              <button
+                className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md text-white flex items-center justify-center hover:bg-brand-primary hover:text-brand-secondary transition-all pointer-events-auto"
+                onClick={() => paginate(-1)}
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </button>
+              <button
+                className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md text-white flex items-center justify-center hover:bg-brand-primary hover:text-brand-secondary transition-all pointer-events-auto"
+                onClick={() => paginate(1)}
+              >
+                <ChevronRight className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+              {images.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setDirection(i > currentIndex ? 1 : -1);
+                    setCurrentIndex(i);
+                  }}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    i === currentIndex ? 'w-8 bg-brand-primary' : 'bg-white/50 hover:bg-white'
+                  }`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function OptimizedBlogImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -288,6 +418,10 @@ export default function Blog() {
                       Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
                     </p>
                   </div>
+
+                  {selectedPost.images && selectedPost.images.length > 0 && (
+                    <BlogGallery images={selectedPost.images} />
+                  )}
 
                   <div className="mt-12 pt-12 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-8">
                     <div className="flex items-center gap-4">
@@ -545,8 +679,8 @@ export default function Blog() {
                     </button>
                   ))}
                 </div>
-                <div className="w-full lg:max-w-sm relative group">
-                  <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-primary transition-colors">
+                <div className="w-full lg:max-w-md relative group">
+                  <div className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-primary transition-all duration-300 group-focus-within:scale-110">
                     {isLoading ? <Loader2 className="h-5 w-5 animate-spin text-brand-primary" /> : <Search className="h-5 w-5" />}
                   </div>
                   <input
@@ -554,13 +688,22 @@ export default function Blog() {
                     placeholder="Rechercher un conseil..."
                     value={searchQuery}
                     onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-                    className="w-full bg-white border border-gray-100 px-14 py-4 rounded-2xl shadow-sm focus:ring-2 focus:ring-brand-primary outline-none transition-all"
+                    className="w-full bg-white border-2 border-gray-100 px-16 py-6 rounded-[2.5rem] shadow-sm focus:shadow-2xl focus:shadow-brand-primary/10 transition-all outline-none placeholder:text-gray-300 font-bold text-brand-secondary focus:border-brand-primary/30"
                   />
-                  {searchQuery && (
-                    <button onClick={() => setSearchQuery('')} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 p-1">
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
+                  <AnimatePresence>
+                    {searchQuery && (
+                      <motion.button 
+                        initial={{ opacity: 0, scale: 0.5, x: 20 }}
+                        animate={{ opacity: 1, scale: 1, x: 0 }}
+                        exit={{ opacity: 0, scale: 0.5, x: 20 }}
+                        onClick={() => setSearchQuery('')} 
+                        className="absolute right-6 top-1/2 -translate-y-1/2 text-white bg-brand-secondary p-2 rounded-xl hover:bg-brand-primary hover:text-brand-secondary transition-all shadow-lg active:scale-90"
+                      >
+                        <X className="h-4 w-4" />
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                  <div className="absolute -bottom-2 left-10 right-10 h-1 bg-brand-primary scale-x-0 group-focus-within:scale-x-100 transition-transform duration-500 origin-center rounded-full shadow-[0_0_15px_rgba(255,215,0,0.5)]" />
                 </div>
               </div>
 
@@ -609,8 +752,8 @@ export default function Blog() {
                               <span className="flex items-center gap-1.5"><Calendar className="h-3 w-3" /> {post.date}</span>
                               <span className="flex items-center gap-1.5"><User className="h-3 w-3" /> {post.author}</span>
                             </div>
-                            <h2 className="text-xl font-bold text-brand-secondary mb-4 group-hover:text-brand-primary transition-colors">{post.title}</h2>
-                            <p className="text-gray-500 text-sm mb-8 flex-1 line-clamp-3">{post.excerpt}</p>
+                            <h2 className="text-xl font-bold text-brand-secondary mb-4 group-hover:text-brand-primary transition-colors tracking-tight leading-tight">{post.title}</h2>
+                            <p className="text-gray-500 text-sm mb-8 flex-1 line-clamp-3 leading-relaxed">{post.excerpt}</p>
                             <div className="flex items-center gap-2 text-brand-secondary font-bold text-sm group-hover:gap-3 transition-all">Lire la suite <ArrowRight className="h-4 w-4 text-brand-primary" /></div>
                           </div>
                         </motion.article>
@@ -620,14 +763,34 @@ export default function Blog() {
 
                   {totalPages > 1 && (
                     <nav className="mt-16 flex justify-center items-center gap-2" aria-label="Pagination">
-                      <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-3 rounded-xl bg-white hover:bg-brand-primary disabled:opacity-30 transition-all shadow-sm"><ArrowRight className="h-5 w-5 rotate-180" /></button>
-                      <div className="flex gap-2">
+                      <button 
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                        disabled={currentPage === 1} 
+                        className="p-4 rounded-2xl bg-white border border-gray-100 text-brand-secondary hover:bg-brand-primary disabled:opacity-30 transition-all shadow-sm hover:shadow-md flex items-center gap-2 font-bold text-xs uppercase tracking-widest"
+                      >
+                         <ChevronLeft className="h-5 w-5" />
+                         <span className="hidden sm:inline">Précédent</span>
+                      </button>
+                      <div className="flex gap-2 mx-4">
                         {getPageNumbers().map((page, i) => (
-                          page === '...' ? <span key={i} className="w-10 h-10 flex items-center justify-center text-gray-400">...</span> :
-                          <button key={i} onClick={() => setCurrentPage(Number(page))} className={`w-10 h-10 rounded-xl font-bold text-sm transition-all ${currentPage === page ? 'bg-brand-primary text-brand-secondary shadow-lg' : 'bg-white text-gray-400 border border-gray-100 hover:border-brand-primary'}`}>{page}</button>
+                          page === '...' ? <span key={i} className="w-12 h-12 flex items-center justify-center text-gray-400 font-black">...</span> :
+                          <button 
+                            key={i} 
+                            onClick={() => setCurrentPage(Number(page))} 
+                            className={`w-12 h-12 rounded-2xl font-black text-sm transition-all ${currentPage === page ? 'bg-brand-primary text-brand-secondary shadow-lg scale-110' : 'bg-white text-gray-400 border border-gray-100 hover:border-brand-primary hover:text-brand-secondary shadow-sm'}`}
+                          >
+                            {page}
+                          </button>
                         ))}
                       </div>
-                      <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-3 rounded-xl bg-white hover:bg-brand-primary disabled:opacity-30 transition-all shadow-sm"><ArrowRight className="h-5 w-5" /></button>
+                      <button 
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
+                        disabled={currentPage === totalPages} 
+                        className="p-4 rounded-2xl bg-white border border-gray-100 text-brand-secondary hover:bg-brand-primary disabled:opacity-30 transition-all shadow-sm hover:shadow-md flex items-center gap-2 font-bold text-xs uppercase tracking-widest"
+                      >
+                        <span className="hidden sm:inline">Suivant</span>
+                        <ChevronRight className="h-5 w-5" />
+                      </button>
                     </nav>
                   )}
                 </>

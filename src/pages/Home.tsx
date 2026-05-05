@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Zap, ShieldCheck, Leaf, Star, Phone, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, Zap, ShieldCheck, Leaf, Star, Phone, ChevronLeft, ChevronRight, Quote } from 'lucide-react';
 import { SERVICES, PROJECTS, TESTIMONIALS } from '../constants';
 import { Link } from 'react-router-dom';
 import OptimizedImage from '../components/OptimizedImage';
@@ -29,6 +29,126 @@ const HERO_SLIDES = [
     subtitle: "Une maintenance garantie et des composants premium pour une sérénité sur le long terme."
   }
 ];
+
+function TestimonialCarousel() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
+
+  const slideVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 500 : -500,
+      opacity: 0,
+      scale: 0.95
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1,
+      scale: 1
+    },
+    exit: (direction: number) => ({
+      zIndex: 0,
+      x: direction < 0 ? 500 : -500,
+      opacity: 0,
+      scale: 0.95
+    })
+  };
+
+  const paginate = (newDirection: number) => {
+    setDirection(newDirection);
+    setCurrentIndex((prevIndex) => (prevIndex + newDirection + TESTIMONIALS.length) % TESTIMONIALS.length);
+  };
+
+  // Autoplay
+  useEffect(() => {
+    const timer = setInterval(() => paginate(1), 5000);
+    return () => clearInterval(timer);
+  }, [currentIndex]);
+
+  const t = TESTIMONIALS[currentIndex];
+
+  return (
+    <div className="relative max-w-4xl mx-auto">
+      <div className="relative h-[450px] md:h-[400px]">
+        <AnimatePresence initial={false} custom={direction} mode="wait">
+          <motion.div
+            key={currentIndex}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{
+              x: { type: "spring", stiffness: 300, damping: 30 },
+              opacity: { duration: 0.2 },
+              scale: { duration: 0.2 }
+            }}
+            className="absolute inset-0 bg-white p-10 md:p-16 rounded-[3.5rem] shadow-2xl shadow-brand-secondary/5 border border-gray-100 flex flex-col justify-center items-center text-center"
+          >
+            <div className="flex gap-1 mb-8">
+              {[...Array(5)].map((_, i) => (
+                <Star 
+                  key={i} 
+                  className={`h-6 w-6 ${i < t.rating ? 'text-brand-primary fill-brand-primary' : 'text-gray-200'}`} 
+                />
+              ))}
+            </div>
+            
+            <Quote className="h-12 w-12 text-brand-primary/10 absolute top-12 left-12" />
+            
+            <blockquote className="text-xl md:text-2xl font-medium text-brand-secondary italic mb-12 leading-relaxed relative z-10">
+              "{t.text}"
+            </blockquote>
+
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-brand-neutral rounded-full flex items-center justify-center font-black text-brand-secondary text-2xl border-4 border-white shadow-lg">
+                {t.name.charAt(0)}
+              </div>
+              <div className="text-left">
+                <cite className="not-italic font-black text-brand-secondary text-xl">{t.name}</cite>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5">Client Particulier</p>
+              </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Navigation Buttons */}
+      <div className="absolute -left-4 md:-left-20 top-1/2 -translate-y-1/2 pointer-events-none">
+        <button
+          onClick={() => paginate(-1)}
+          className="w-14 h-14 rounded-2xl bg-white shadow-xl text-brand-secondary flex items-center justify-center hover:bg-brand-primary transition-all pointer-events-auto active:scale-90"
+        >
+          <ChevronLeft className="h-6 w-6" />
+        </button>
+      </div>
+      <div className="absolute -right-4 md:-right-20 top-1/2 -translate-y-1/2 pointer-events-none">
+        <button
+          onClick={() => paginate(1)}
+          className="w-14 h-14 rounded-2xl bg-white shadow-xl text-brand-secondary flex items-center justify-center hover:bg-brand-primary transition-all pointer-events-auto active:scale-90"
+        >
+          <ChevronRight className="h-6 w-6" />
+        </button>
+      </div>
+
+      {/* Indicators */}
+      <div className="flex justify-center gap-3 mt-12">
+        {TESTIMONIALS.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => {
+              setDirection(i > currentIndex ? 1 : -1);
+              setCurrentIndex(i);
+            }}
+            className={`h-2 rounded-full transition-all duration-300 ${
+              i === currentIndex ? 'w-10 bg-brand-primary' : 'w-2 bg-gray-200 hover:bg-gray-300'
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -215,7 +335,7 @@ export default function Home() {
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-brand-secondary/5 rounded-full blur-3xl -ml-48 -mb-48" />
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-20">
+          <div className="text-center mb-16">
             <motion.p 
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
@@ -234,38 +354,7 @@ export default function Home() {
             </motion.h2>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {TESTIMONIALS.map((t, idx) => (
-              <motion.div 
-                key={t.id}
-                initial={{ opacity: 0, x: idx % 2 === 0 ? -20 : 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                className="bg-white p-10 rounded-[2.5rem] shadow-xl shadow-brand-secondary/5 border border-gray-100 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex gap-1 mb-6">
-                    {[...Array(t.rating)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 text-brand-primary fill-brand-primary" />
-                    ))}
-                  </div>
-                  <blockquote className="text-xl font-medium text-brand-secondary italic mb-10 leading-relaxed">
-                    "{t.text}"
-                  </blockquote>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-brand-neutral rounded-full flex items-center justify-center font-black text-brand-secondary text-xl">
-                    {t.name.charAt(0)}
-                  </div>
-                  <div>
-                    <cite className="not-italic font-black text-brand-secondary text-lg">{t.name}</cite>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5">Client SOL!</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          <TestimonialCarousel />
         </div>
       </section>
 
