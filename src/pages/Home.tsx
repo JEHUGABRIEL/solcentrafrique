@@ -32,119 +32,100 @@ const HERO_SLIDES = [
 
 function TestimonialCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [direction, setDirection] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(1);
 
-  const slideVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 500 : -500,
-      opacity: 0,
-      scale: 0.95
-    }),
-    center: {
-      zIndex: 1,
-      x: 0,
-      opacity: 1,
-      scale: 1
-    },
-    exit: (direction: number) => ({
-      zIndex: 0,
-      x: direction < 0 ? 500 : -500,
-      opacity: 0,
-      scale: 0.95
-    })
-  };
-
-  const paginate = (newDirection: number) => {
-    setDirection(newDirection);
-    setCurrentIndex((prevIndex) => (prevIndex + newDirection + TESTIMONIALS.length) % TESTIMONIALS.length);
-  };
-
-  // Autoplay
   useEffect(() => {
-    const timer = setInterval(() => paginate(1), 5000);
-    return () => clearInterval(timer);
-  }, [currentIndex]);
+    const handleResize = () => {
+      if (window.innerWidth >= 1280) setItemsPerPage(3);
+      else if (window.innerWidth >= 768) setItemsPerPage(2);
+      else setItemsPerPage(1);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  const t = TESTIMONIALS[currentIndex];
+  const totalPages = Math.ceil(TESTIMONIALS.length / itemsPerPage);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % totalPages);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [totalPages]);
+
+  const visibleTestimonials = TESTIMONIALS.slice(
+    currentIndex * itemsPerPage,
+    (currentIndex * itemsPerPage) + itemsPerPage
+  );
 
   return (
-    <div className="relative max-w-4xl mx-auto">
-      <div className="relative h-[450px] md:h-[400px]">
-        <AnimatePresence initial={false} custom={direction} mode="wait">
-          <motion.div
-            key={currentIndex}
-            custom={direction}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              x: { type: "spring", stiffness: 300, damping: 30 },
-              opacity: { duration: 0.2 },
-              scale: { duration: 0.2 }
-            }}
-            className="absolute inset-0 bg-white p-10 md:p-16 rounded-[3.5rem] shadow-2xl shadow-brand-secondary/5 border border-gray-100 flex flex-col justify-center items-center text-center"
-          >
-            <div className="flex gap-1 mb-8">
-              {[...Array(5)].map((_, i) => (
-                <Star 
-                  key={i} 
-                  className={`h-6 w-6 ${i < t.rating ? 'text-brand-primary fill-brand-primary' : 'text-gray-200'}`} 
-                />
-              ))}
-            </div>
-            
-            <Quote className="h-12 w-12 text-brand-primary/10 absolute top-12 left-12" />
-            
-            <blockquote className="text-xl md:text-2xl font-medium text-brand-secondary italic mb-12 leading-relaxed relative z-10">
-              "{t.text}"
-            </blockquote>
+    <div className="relative">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <AnimatePresence mode="wait">
+          {visibleTestimonials.map((t, idx) => (
+            <motion.div
+              key={`${currentIndex}-${t.id}`}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ duration: 0.5, delay: idx * 0.1 }}
+              className="bg-white p-10 rounded-[3rem] shadow-xl shadow-brand-secondary/5 border border-gray-100 flex flex-col items-center text-center relative"
+            >
+              <div className="flex gap-1 mb-6">
+                {[...Array(5)].map((_, i) => (
+                  <Star 
+                    key={i} 
+                    className={`h-5 w-5 ${i < t.rating ? 'text-brand-primary fill-brand-primary' : 'text-gray-200'}`} 
+                  />
+                ))}
+              </div>
+              
+              <Quote className="h-10 w-10 text-brand-primary/10 absolute top-8 left-8" />
+              
+              <blockquote className="text-lg font-medium text-brand-secondary italic mb-10 leading-relaxed flex-1">
+                "{t.text}"
+              </blockquote>
 
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-brand-neutral rounded-full flex items-center justify-center font-black text-brand-secondary text-2xl border-4 border-white shadow-lg">
-                {t.name.charAt(0)}
+              <div className="flex items-center gap-4 mt-auto">
+                <div className="w-14 h-14 bg-brand-neutral rounded-full flex items-center justify-center font-black text-brand-secondary text-xl border-4 border-white shadow-md">
+                  {t.name.charAt(0)}
+                </div>
+                <div className="text-left">
+                  <cite className="not-italic font-black text-brand-secondary text-lg">{t.name}</cite>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">Client SOL!</p>
+                </div>
               </div>
-              <div className="text-left">
-                <cite className="not-italic font-black text-brand-secondary text-xl">{t.name}</cite>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5">Client Particulier</p>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          ))}
         </AnimatePresence>
       </div>
 
       {/* Navigation Buttons */}
-      <div className="absolute -left-4 md:-left-20 top-1/2 -translate-y-1/2 pointer-events-none">
+      <div className="flex justify-center items-center gap-6 mt-12">
         <button
-          onClick={() => paginate(-1)}
-          className="w-14 h-14 rounded-2xl bg-white shadow-xl text-brand-secondary flex items-center justify-center hover:bg-brand-primary transition-all pointer-events-auto active:scale-90"
+          onClick={() => setCurrentIndex((prev) => (prev - 1 + totalPages) % totalPages)}
+          className="w-12 h-12 rounded-2xl bg-white shadow-xl text-brand-secondary flex items-center justify-center hover:bg-brand-primary transition-all active:scale-90"
         >
           <ChevronLeft className="h-6 w-6" />
         </button>
-      </div>
-      <div className="absolute -right-4 md:-right-20 top-1/2 -translate-y-1/2 pointer-events-none">
+        <div className="flex gap-2">
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentIndex(i)}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                i === currentIndex ? 'w-8 bg-brand-primary' : 'w-2 bg-gray-200 hover:bg-gray-300'
+              }`}
+            />
+          ))}
+        </div>
         <button
-          onClick={() => paginate(1)}
-          className="w-14 h-14 rounded-2xl bg-white shadow-xl text-brand-secondary flex items-center justify-center hover:bg-brand-primary transition-all pointer-events-auto active:scale-90"
+          onClick={() => setCurrentIndex((prev) => (prev + 1) % totalPages)}
+          className="w-12 h-12 rounded-2xl bg-white shadow-xl text-brand-secondary flex items-center justify-center hover:bg-brand-primary transition-all active:scale-90"
         >
           <ChevronRight className="h-6 w-6" />
         </button>
-      </div>
-
-      {/* Indicators */}
-      <div className="flex justify-center gap-3 mt-12">
-        {TESTIMONIALS.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => {
-              setDirection(i > currentIndex ? 1 : -1);
-              setCurrentIndex(i);
-            }}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              i === currentIndex ? 'w-10 bg-brand-primary' : 'w-2 bg-gray-200 hover:bg-gray-300'
-            }`}
-          />
-        ))}
       </div>
     </div>
   );

@@ -126,4 +126,16 @@ export const TESTIMONIALS: Testimonial[] = [
     text: "Plus de coupures pendant les dîners de nos clients. Un investissement rentabilisé en moins de 3 ans.",
     rating: 5,
   },
+  {
+    id: '3',
+    name: 'Dr. Bangassa',
+    text: "Notre centre de santé est maintenant opérationnel 24h/24 grâce aux batteries Lithium de SOL!. Un vrai changement pour nos patients.",
+    rating: 5,
+  },
+  {
+    id: '4',
+    name: 'M. Ibrahim',
+    text: "Excellente maintenance. Les techniciens sont passés nettoyer les panneaux et vérifier le système. Je recommande vivement.",
+    rating: 4,
+  }
 ];

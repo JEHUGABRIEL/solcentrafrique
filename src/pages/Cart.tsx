@@ -7,7 +7,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 export default function Cart() {
   const { cart, removeFromCart, clearCart } = useCart();
-  const { isAuthenticated } = useAuth();
+  // User auth removed
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -121,7 +121,7 @@ export default function Cart() {
                   Votre sélection est prête. Vous pouvez soit demander un devis complet pour vos services, soit commander les produits directement sur WhatsApp.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  {isAuthenticated ? (
+                  {true ? (
                     <Link 
                       to="/contact"
                       className="bg-brand-primary text-brand-secondary px-10 py-5 rounded-2xl font-bold flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-xl shadow-brand-primary/20"
@@ -130,14 +130,14 @@ export default function Cart() {
                     </Link>
                   ) : (
                     <button
-                      onClick={() => navigate('/login', { state: { from: location } })}
+                      onClick={() => {}}
                       className="bg-brand-primary text-brand-secondary px-10 py-5 rounded-2xl font-bold flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-xl shadow-brand-primary/20"
                     >
                       <Lock className="h-5 w-5" /> Se connecter pour commander
                     </button>
                   )}
                   
-                  {isAuthenticated && (
+                  {true && (
                     <a 
                       href={`https://wa.me/23675000000?text=${encodeURIComponent(
                         `Bonjour SOL! Centrafrique, je souhaite commander : \n${cart.map(i => `- ${i.title}${i.price ? ` (${i.price} FCFA)` : ''}`).join('\n')}`

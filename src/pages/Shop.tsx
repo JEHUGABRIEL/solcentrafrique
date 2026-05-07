@@ -4,9 +4,20 @@ import { PRODUCTS } from '../constants';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingCart, Check, Filter, Search, ShoppingBag, MessageSquare, Heart, HeartOff, Loader2, Lock, Clock as ClockIcon, Star, X, Info } from 'lucide-react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { ShoppingCart, Check, Filter, Search, ShoppingBag, MessageSquare, Heart, HeartOff, Loader2, Lock, Clock as ClockIcon, Star, X, Info, FileText } from 'lucide-react';
 import OptimizedImage from '../components/OptimizedImage';
+import { fetchPosts } from '../services/adminService';
+
+interface Post {
+  id: number;
+  title: string;
+  excerpt: string;
+  date: string;
+  author: string;
+  image: string;
+  category: string;
+}
 
 const Countdown = ({ expiryDate }: { expiryDate: string }) => {
   const [timeLeft, setTimeLeft] = useState<{ days: number, hours: number, minutes: number, seconds: number } | null>(null);
@@ -103,9 +114,10 @@ export default function Shop() {
   const [activeCategory, setActiveCategory] = useState('Tous');
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<typeof PRODUCTS[0] | null>(null);
   const { addToCart, cart, favorites, toggleFavorite } = useCart();
-  const { isAuthenticated } = useAuth();
+  // User auth removed
   const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -113,8 +125,29 @@ export default function Shop() {
   useEffect(() => {
     // Simulate loading
     const timer = setTimeout(() => setIsLoading(false), 1500);
+    loadPosts();
     return () => clearTimeout(timer);
   }, []);
+
+  const loadPosts = async () => {
+    try {
+      const data = await fetchPosts();
+      setPosts(data);
+    } catch (err) {
+      console.error("Error loading posts for shop", err);
+    }
+  };
+
+  const usefulArticles = useMemo(() => {
+    if (!selectedProduct) return [];
+    // Match posts by product category or keywords
+    return posts.filter(post => 
+      post.category.toLowerCase().includes(selectedProduct.category.toLowerCase()) ||
+      selectedProduct.title.toLowerCase().split(' ').some(word => 
+        word.length > 3 && post.title.toLowerCase().includes(word)
+      )
+    ).slice(0, 2);
+  }, [selectedProduct, posts]);
 
   const filteredProducts = PRODUCTS.filter(p => {
     const matchesCategory = activeCategory === 'Tous' || p.category === activeCategory;
@@ -268,8 +301,8 @@ export default function Shop() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (!isAuthenticated) {
-                            navigate('/login', { state: { from: location } });
+                          if (false) {
+                            // user auth removed
                             return;
                           }
                           addToCart({ 
@@ -289,7 +322,7 @@ export default function Shop() {
                             : 'bg-brand-neutral text-brand-secondary hover:bg-brand-primary shadow-sm hover:shadow-brand-primary/20'
                         }`}
                       >
-                        {!isAuthenticated ? (
+                        {false ? (
                           <div className="flex items-center gap-2">
                              <Lock className="h-5 w-5 opacity-50" />
                              <ShoppingCart className="h-6 w-6" />
@@ -298,7 +331,7 @@ export default function Shop() {
                           isInCart(product.id) ? <Check className="h-6 w-6" /> : <ShoppingCart className="h-6 w-6" />
                         )}
                         
-                        {!isAuthenticated && (
+                        {false && (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-brand-secondary text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                             Connectez-vous pour commander
                           </div>
@@ -376,8 +409,8 @@ export default function Shop() {
                   <div className="flex flex-col sm:flex-row gap-4 mb-12">
                     <button
                       onClick={() => {
-                        if (!isAuthenticated) {
-                          navigate('/login', { state: { from: location } });
+                        if (false) {
+                          // user auth removed
                           return;
                         }
                         addToCart({ 
@@ -412,6 +445,33 @@ export default function Shop() {
                       <Heart className={`h-6 w-6 ${favorites.includes(selectedProduct.id) ? 'fill-current' : ''}`} />
                       Favoris
                     </button>
+                  </div>
+
+                  <div className="mb-12">
+                    <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                      <FileText className="h-4 w-4" /> Articles Utiles
+                    </h4>
+                    {usefulArticles.length > 0 ? (
+                      <div className="space-y-3">
+                        {usefulArticles.map(article => (
+                          <Link 
+                            key={article.id} 
+                            to="/blog" 
+                            className="flex items-center gap-4 p-4 bg-brand-neutral/50 rounded-2xl hover:bg-brand-primary/10 transition-all border border-transparent hover:border-brand-primary/20 group"
+                          >
+                            <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0">
+                              <img src={article.image} alt={article.title} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-[10px] font-bold text-brand-primary uppercase tracking-widest mb-0.5">{article.category}</p>
+                              <h5 className="text-sm font-bold text-brand-secondary line-clamp-1 group-hover:text-brand-primary transition-colors">{article.title}</h5>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-gray-400 italic">Aucun article disponible pour ce produit.</p>
+                    )}
                   </div>
 
                   <div>

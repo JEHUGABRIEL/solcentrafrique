@@ -102,7 +102,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (!isAdmin) {
-      navigate('/login', { state: { from: { pathname: '/admin' } } });
+      navigate('/admin/login');
       return;
     }
     loadData();

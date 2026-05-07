@@ -23,7 +23,7 @@ const iconMap: Record<string, React.ElementType> = {
 
 export default function Services() {
   const { addToCart, cart } = useCart();
-  const { isAuthenticated } = useAuth();
+  // User auth removed
   const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -143,8 +143,8 @@ export default function Services() {
 
                 <button
                   onClick={() => {
-                    if (!isAuthenticated) {
-                      navigate('/login', { state: { from: location } });
+                    if (false) {
+                      navigate('/contact');
                       return;
                     }
                     addToCart({ 
@@ -171,12 +171,12 @@ export default function Services() {
                     </>
                   ) : (
                     <>
-                      {!isAuthenticated && <Lock className="h-5 w-5" />}
+                      
                       <ShoppingCart className="h-5 w-5" /> 
-                      {isAuthenticated ? 'Ajouter à ma demande' : 'Se connecter pour commander'}
+                      'Demander un devis'
                     </>
                   )}
-                  {!isAuthenticated && (
+                  {false && (
                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-brand-secondary text-white text-[10px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                         Connexion requise
                      </div>

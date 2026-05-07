@@ -625,11 +625,21 @@ export default function Blog() {
               <section className="mb-24">
                 <div className="flex items-center gap-4 mb-8">
                   <div className="h-px bg-gray-200 flex-1"></div>
-                  <h3 className="text-2xl font-bold text-brand-secondary px-4">Articles Similaires</h3>
+                  <h3 className="text-2xl font-black text-brand-secondary px-6 shrink-0 flex items-center gap-3">
+                    <ImageIcon className="h-6 w-6 text-brand-primary" />
+                    Articles Similaires
+                  </h3>
                   <div className="h-px bg-gray-200 flex-1"></div>
                 </div>
-                <div className="grid md:grid-cols-2 gap-8">
-                  {posts.filter(p => p.id !== selectedPost.id).slice(0, 2).map(post => (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {posts
+                    .filter(p => p.id !== selectedPost.id)
+                    .sort((a, b) => {
+                      if (a.category === selectedPost.category && b.category !== selectedPost.category) return -1;
+                      if (a.category !== selectedPost.category && b.category === selectedPost.category) return 1;
+                      return 0;
+                    })
+                    .slice(0, 3).map(post => (
                     <motion.div 
                       key={post.id}
                       whileHover={{ y: -5 }}
@@ -637,16 +647,16 @@ export default function Blog() {
                         setSelectedPost(post);
                         window.scrollTo(0, 0);
                       }}
-                      className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex gap-6 cursor-pointer group"
+                      className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-4 cursor-pointer group"
                     >
-                      <div className="w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0">
+                      <div className="h-40 rounded-2xl overflow-hidden">
                         <OptimizedBlogImage src={post.image} alt={post.title} className="w-full h-full group-hover:scale-110 transition-transform duration-500" />
                       </div>
                       <div>
-                        <h4 className="font-bold text-brand-secondary mb-2 group-hover:text-brand-primary transition-colors line-clamp-2">
+                        <h4 className="font-bold text-brand-secondary mb-2 group-hover:text-brand-primary transition-colors line-clamp-2 leading-tight">
                           {post.title}
                         </h4>
-                        <span className="text-xs font-bold text-brand-primary uppercase tracking-widest">{post.category}</span>
+                        <span className="text-[10px] font-black text-brand-primary uppercase tracking-widest bg-brand-primary/10 px-2.5 py-1 rounded-lg">{post.category}</span>
                       </div>
                     </motion.div>
                   ))}

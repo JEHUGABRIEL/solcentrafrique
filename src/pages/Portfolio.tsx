@@ -23,7 +23,7 @@ export default function Portfolio() {
   const [direction, setDirection] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
   const [autoplay, setAutoplay] = useState(true);
-  const { isAuthenticated } = useAuth();
+  // User auth removed
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -367,8 +367,8 @@ export default function Portfolio() {
                 <div className="mt-12 pt-10 border-t border-gray-100">
                   <button 
                     onClick={() => {
-                      if (!isAuthenticated) {
-                        navigate('/login', { state: { from: location } });
+                      if (false) {
+                        navigate('/contact');
                         return;
                       }
                       // In a real app, this would open a lead form
@@ -376,10 +376,10 @@ export default function Portfolio() {
                     }}
                     className="w-full bg-brand-secondary text-white py-6 rounded-[2rem] font-black uppercase tracking-widest hover:bg-brand-primary hover:text-brand-secondary transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-3 group"
                   >
-                    {!isAuthenticated && <Lock className="h-5 w-5" />}
-                    {isAuthenticated ? 'Demander une étude similaire' : 'Se connecter pour commander'}
+                    
+                    'Demander une étude similaire'
                   </button>
-                  {!isAuthenticated && (
+                  {false && (
                     <p className="text-center text-xs text-gray-400 mt-4 font-bold">
                       Identifiez-vous pour accéder à nos services professionnels.
                     </p>

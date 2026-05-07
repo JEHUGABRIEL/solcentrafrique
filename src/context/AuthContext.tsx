@@ -1,81 +1,72 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-interface User {
-  email: string;
-  role: 'admin' | 'user';
-  name: string;
-  phone?: string;
-  address?: string;
-  avatar?: string;
-}
+// ─── Superadmin ────────────────────────────────────────────
+// Credentials stockés côté client (static hosting sans backend)
+// Changer le mot de passe ici pour modifier l'accès admin
+const ADMIN_EMAIL    = 'jehubin@gmail.com';
+const ADMIN_PASSWORD = 'Sol!Admin2026';
+const AUTH_KEY       = 'sol_admin_session';
 
 interface AuthContextType {
-  user: User | null;
-  login: (email: string, role: 'admin' | 'user', token: string, extraData?: Partial<User>) => void;
-  logout: () => void;
-  updateProfile: (data: Partial<User>) => void;
-  isAuthenticated: boolean;
-  isAdmin: boolean;
+  isAdmin:     boolean;
+  isLoading:   boolean;
+  login:       (email: string, password: string) => Promise<boolean>;
+  logout:      () => void;
+  adminEmail:  string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [isAdmin,   setIsAdmin]   = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Restaure la session au chargement
   useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    const userData = localStorage.getItem('user_data');
-    if (token && userData) {
-      setUser(JSON.parse(userData));
+    try {
+      const session = localStorage.getItem(AUTH_KEY);
+      if (session) {
+        const { email, expiry } = JSON.parse(session);
+        if (email === ADMIN_EMAIL && Date.now() < expiry) {
+          setIsAdmin(true);
+        } else {
+          localStorage.removeItem(AUTH_KEY);
+        }
+      }
+    } catch {
+      localStorage.removeItem(AUTH_KEY);
     }
+    setIsLoading(false);
   }, []);
 
-  const login = (email: string, role: 'admin' | 'user', token: string, extraData?: Partial<User>) => {
-    const userData = { 
-      email, 
-      role, 
-      name: extraData?.name || email.split('@')[0], 
-      ...extraData 
-    };
-    setUser(userData);
-    localStorage.setItem('auth_token', token);
-    localStorage.setItem('user_data', JSON.stringify(userData));
-    if (role === 'admin') {
-      localStorage.setItem('admin_token', token);
-    }
-  };
+  const login = async (email: string, password: string): Promise<boolean> => {
+    // Simule un délai réseau réaliste
+    await new Promise(r => setTimeout(r, 600));
 
-  const updateProfile = (data: Partial<User>) => {
-    if (!user) return;
-    const updatedUser = { ...user, ...data };
-    setUser(updatedUser);
-    localStorage.setItem('user_data', JSON.stringify(updatedUser));
+    if (email.trim().toLowerCase() === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      // Session valide 8 heures
+      const session = { email: ADMIN_EMAIL, expiry: Date.now() + 8 * 60 * 60 * 1000 };
+      localStorage.setItem(AUTH_KEY, JSON.stringify(session));
+      setIsAdmin(true);
+      return true;
+    }
+    return false;
   };
 
   const logout = () => {
-    setUser(null);
-    localStorage.clear();
+    localStorage.removeItem(AUTH_KEY);
+    setIsAdmin(false);
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      login, 
-      logout, 
-      updateProfile,
-      isAuthenticated: !!user,
-      isAdmin: user?.role === 'admin'
-    }}>
+    <AuthContext.Provider value={{ isAdmin, isLoading, login, logout, adminEmail: ADMIN_EMAIL }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
 };
